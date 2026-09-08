@@ -1,111 +1,189 @@
+@import 'tailwindcss';
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  color-scheme: light;
+  --background: #fafafa;
+  --surface: #ffffff;
+  --surface-subtle: #f7f7f8;
+  --surface-hover: #f4f4f5;
+  --border: #e5e7eb;
+  --border-strong: #d4d4d8;
+  --control-border: #85858f;
+  --text-primary: #18181b;
+  --text-secondary: #62626b;
+  /* Metadata remains readable at 12px; muted is not a low-contrast placeholder. */
+  --text-muted: #71717a;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-soft: #eef2ff;
+  --success: #15803d;
+  --warning: #a34b06;
+  --danger: #b91c1c;
+  --on-accent: #ffffff;
+  --on-danger: #ffffff;
+  --overlay: rgb(0 0 0 / 35%);
+  --overlay-shadow: 0 4px 16px rgb(0 0 0 / 12%);
+  --radius-control: 6px;
+  --radius-card: 8px;
+  --radius-overlay: 10px;
+  --radius-tag: 5px;
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 20px;
+  --space-7: 24px;
+  --control-height: 32px;
+  --control-height-sm: 30px;
+  --input-height: 34px;
+  --motion-duration: 160ms;
+}
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+.dark {
+  color-scheme: dark;
+  --background: #111113;
+  --surface: #18181b;
+  --surface-subtle: #141416;
+  --surface-hover: #202023;
+  --border: #27272a;
+  --border-strong: #52525b;
+  --control-border: #71717a;
+  --text-primary: #fafafa;
+  --text-secondary: #b4b4be;
+  --text-muted: #a1a1aa;
+  --accent: #a5b4fc;
+  --accent-hover: #c7d2fe;
+  --accent-soft: #25263d;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --on-accent: #18181b;
+  --on-danger: #18181b;
+  --overlay: rgb(0 0 0 / 55%);
+  --overlay-shadow: 0 4px 16px rgb(0 0 0 / 30%);
+}
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* shadcn semantic aliases; accent utilities use the quiet selected surface. */
+:root,
+.dark {
+  --foreground: var(--text-primary);
+  --card: var(--surface);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--accent);
+  --primary-foreground: var(--on-accent);
+  --secondary: var(--surface-subtle);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--surface-subtle);
+  --muted-foreground: var(--text-muted);
+  --accent-foreground: var(--accent);
+  --destructive: var(--danger);
+  --destructive-foreground: var(--on-danger);
+  --input: var(--control-border);
+  --ring: var(--accent);
+  --radius: var(--radius-card);
+}
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
+@theme inline {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', Arial,
+    sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-surface-hover: var(--surface-hover);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--accent-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent-soft);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
+  --radius-control: var(--radius-control);
+  --radius-card: var(--radius-card);
+  --radius-overlay: var(--radius-overlay);
+  --radius-tag: var(--radius-tag);
+  --radius-sm: var(--radius-control);
+  --radius-md: var(--radius-control);
+  --radius-lg: var(--radius-card);
+  --radius-xl: var(--radius-overlay);
+  --spacing-control: var(--control-height);
+  --spacing-control-sm: var(--control-height-sm);
+  --spacing-input: var(--input-height);
+  --text-ui: 13px;
+  --text-ui--line-height: 1.5;
+  --text-metadata: 12px;
+  --text-metadata--line-height: 1.5;
+  --text-tag: 11px;
+  --text-card-title: 14px;
+  --text-page-title: 18px;
+  --text-metric: 24px;
+  --shadow-overlay: var(--overlay-shadow);
+  --default-transition-duration: var(--motion-duration);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  #root {
+    min-height: 100svh;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--foreground);
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+@keyframes ui-fade-in {
+  from {
+    opacity: 0;
   }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+  to {
+    opacity: 1;
   }
 }
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+.ui-fade[data-state='open'],
+.ui-fade[data-state='delayed-open'],
+.ui-fade[data-state='instant-open'] {
+  animation: ui-fade-in var(--motion-duration) ease-out;
 }
-
-body {
-  margin: 0;
-}
-
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
 }

@@ -2,7 +2,7 @@
 
 작성일: 2026-09-08 (Asia/Seoul)  
 기준 디렉터리: `/Users/taeintyang/Documents/study/histask/histask`  
-상태: 계획 작성 완료 / 아래 구현 Task는 모두 미착수
+상태: Batch 1–5 완료 / TASK-001–010 및 TASK-023–026 완료, 이후 Suggested Batch 미착수
 
 ## 기준 문서와 계획의 적용 범위
 
@@ -193,6 +193,9 @@ Parallel의 Yes는 **Dependencies 완료 후**, 표시된 독립 경로의 작�
 
 ## TASK-001 — 기존 toolchain 보완과 테스트 실행 기반
 
+### 상태
+완료 (2026-09-08) — Batch 1 Validation Gate 통과
+
 ### Phase
 Phase 1 — Foundation & Design System
 
@@ -226,6 +229,9 @@ No
 G. DOM 상호작용 테스트 실제 통과 확인. 기본 프로젝트 재생성이나 불필요한 dependency upgrade가 없는지 diff 검토.
 
 ## TASK-002 — Tailwind·shadcn와 compact 디자인 토큰
+
+### 상태
+완료 (2026-09-08) — Batch 1 Validation Gate 및 light/dark 시각 검토 통과
 
 ### Phase
 Phase 1 — Foundation & Design System
@@ -261,6 +267,9 @@ G. ThemeProvider OS 변경/cleanup 테스트, dialog focus 복귀 및 tooltip fo
 
 ## TASK-003 — 도메인 타입·날짜·입력 계약
 
+### 상태
+완료 (2026-09-08) — Batch 1 Validation Gate 및 Asia/Seoul·America/New_York 날짜 경계 테스트 통과
+
 ### Phase
 Phase 1 — Foundation & Design System
 
@@ -294,6 +303,9 @@ DESIGN §20/23/24/27의 전체 원문 접근, 우선순위 label, due urgency, �
 G. 공백 입력·잘못된 날짜/enum, 월/연/윤일 경계, 자정, Asia/Seoul 및 DST 시간대 fixture, stale 경계와 미래 시각 테스트.
 
 ## TASK-004 — Dexie schema v1과 무손실 versioning
+
+### 상태
+완료 (2026-09-08) — Batch 2 Validation Gate 및 schema 재열기·migration rollback 테스트 통과
 
 ### Phase
 Phase 2 — Database & Repository
@@ -329,6 +341,9 @@ G. fake-indexeddb 생성/재열기/중복 key 테스트. 별도 테스트 DB의 
 
 ## TASK-005 — Repository 계약·반응형 구독·transaction 경계
 
+### 상태
+완료 (2026-09-08) — Batch 2 Validation Gate 및 구독 cleanup·다중 table rollback 테스트 통과
+
 ### Phase
 Phase 2 — Database & Repository
 
@@ -362,6 +377,9 @@ DESIGN §33–34를 위한 loading/pending/error 상태 계약. 보통 읽기에
 G. repository read/구독 갱신/cleanup, 실패 주입 rollback 테스트. StrictMode mount/unmount에서 구독이 중복 누적되지 않음 확인.
 
 ## TASK-006 — Card CRUD·완료·archive·cascade 삭제
+
+### 상태
+완료 (2026-09-08) — Batch 3 Validation Gate 및 재열기·완료 시각·cascade rollback 테스트 통과
 
 ### Phase
 Phase 3 — Core Domain
@@ -397,6 +415,9 @@ G. Card CRUD, 필수 title, 잘못된 관계, DONE 유지·이탈·재진입, so
 
 ## TASK-007 — WorkLog CRUD와 최신 이력 계산
 
+### 상태
+완료 (2026-09-08) — Batch 3 Validation Gate 및 최신 이력 재계산·부모 갱신 rollback 테스트 통과
+
 ### Phase
 Phase 3 — Core Domain
 
@@ -430,6 +451,9 @@ DESIGN §18/20/26–27: preview와 timeline이 동일한 history를 참조하며
 G. WorkLog 전체 CRUD, orphan 거부, 부모 갱신 rollback, newest-first/latest/count 및 오래된 로그 편집 순서 유지 테스트.
 
 ## TASK-008 — Category·Tag·CardTag와 안전한 삭제
+
+### 상태
+완료 (2026-09-08) — Batch 3 Validation Gate 및 관계 무결성·분류 삭제 무손실/rollback 테스트 통과
 
 ### Phase
 Phase 3 — Core Domain
@@ -465,6 +489,9 @@ G. 분류 CRUD, 복수 Tag, 중복 관계, 삭제 후 무참조/무손실, trans
 
 ## TASK-009 — Board projection과 dashboard 집계
 
+### 상태
+완료 (2026-09-08) — Batch 3 Validation Gate 및 반응형 projection·5개 지표·자정/재활성화 테스트 통과
+
 ### Phase
 Phase 3 — Core Domain
 
@@ -498,6 +525,9 @@ DESIGN §15/18–20의 compact metrics 및 latest-first Card에 필요한 정보
 G. 5개 지표, 보관 제외, 중복 로그, 자정 경계, 마지막 로그 삭제, 여러 Card projection 테스트. Phase 3 Gate에서 모든 domain safety 회귀를 함께 확인.
 
 ## TASK-010 — App shell·라우팅·compact sidebar
+
+### 상태
+완료 (2026-09-08) — Batch 5 Validation Gate 및 route/history/mobile focus·실제 브라우저 shell 검토 통과
 
 ### Phase
 Phase 4 — App Shell & Main Board
@@ -945,6 +975,9 @@ G. 4가지 포함 조건 각각/교집합, 생성만 된 Card, 과거 로그 편
 
 ## TASK-023 — Persistent Storage와 로컬 설정
 
+### 상태
+완료 (2026-09-08) — Batch 5 Validation Gate 및 Storage API 분기·테마 재열기/OS 연동 테스트 통과
+
 ### Phase
 Phase 8 — Data Safety (조기 구현)
 
@@ -978,6 +1011,9 @@ DESIGN §31/34–35/40/42: 작고 명확한 상태 row, 조용한 설명, 과도
 G. Storage API 각 분기 mock, preference 재열기/OS 변경, DB 불가 상태 테스트. 실제 브라우저 요청/상태와 테마 시각 확인.
 
 ## TASK-024 — Backup export와 전체 payload validation
+
+### 상태
+완료 (2026-09-08) — Batch 4 Validation Gate 및 전체 snapshot·invalid corpus·export/validate 왕복 테스트 통과
 
 ### Phase
 Phase 8 — Data Safety (Core Domain 직후 조기 구현)
@@ -1014,6 +1050,9 @@ G. empty/populated/archived export, concurrent write 중 일관된 snapshot, 각
 
 ## TASK-025 — Transactional restore와 전체 삭제 service
 
+### 상태
+완료 (2026-09-08) — Batch 4 Validation Gate 및 replace/delete rollback·재열기·파생 조회 갱신 테스트 통과
+
 ### Phase
 Phase 8 — Data Safety (UI 이전 조기 구현)
 
@@ -1048,6 +1087,9 @@ DESIGN §34/40: confirm UI가 호출하는 mutation 경계를 분리한다. 성�
 G. populated→다른 dataset, empty import, 중간 table insert 실패, duplicate/orphan 검증 실패, 재열기, archive 보존, theme 보존 및 전체 삭제/settings reset 테스트.
 
 ## TASK-026 — Settings의 백업·복원·DELETE 확인 UI
+
+### 상태
+완료 (2026-09-08) — Batch 5/Phase 8 Validation Gate 및 local export/import·무변경 실패·확인/focus 테스트 통과
 
 ### Phase
 Phase 8 — Data Safety (업무 입력 UI 이전 완료)

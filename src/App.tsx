@@ -1,122 +1,86 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { useEffect, useMemo, useState } from 'react'
+import { RouterProvider } from 'react-router'
+import { ThemeProvider } from '@/app/ThemeProvider'
+import { createAppRouter } from '@/app/router'
+import { Button } from '@/components/ui/button'
+import {
+  histaskDatabase,
+  openHistaskDatabase,
+  type HistaskDatabase,
+} from '@/db/database'
+import { DexieSettingsRepository } from '@/repositories/settings'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+type DatabaseState = 'loading' | 'ready' | 'error'
 
+function ReadyApplication({ database }: { database: HistaskDatabase }) {
+  const settings = useMemo(
+    () => new DexieSettingsRepository(database),
+    [database],
+  )
+  const router = useMemo(() => createAppRouter(database), [database])
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <ThemeProvider repository={settings}>
+      <RouterProvider router={router} />
+    </ThemeProvider>
   )
 }
 
-export default App
+export default function App({
+  database = histaskDatabase,
+}: {
+  database?: HistaskDatabase
+}) {
+  const [databaseState, setDatabaseState] = useState<DatabaseState>('loading')
+  const [attempt, setAttempt] = useState(0)
+
+  useEffect(() => {
+    let active = true
+    void openHistaskDatabase(database)
+      .then(() => {
+        if (active) setDatabaseState('ready')
+      })
+      .catch(() => {
+        if (active) setDatabaseState('error')
+      })
+    return () => {
+      active = false
+    }
+  }, [attempt, database])
+
+  if (databaseState === 'ready')
+    return <ReadyApplication database={database} />
+
+  if (databaseState === 'error') {
+    return (
+      <main className="grid min-h-svh place-items-center bg-background p-5">
+        <section className="grid max-w-md gap-3 rounded-overlay border bg-surface p-5">
+          <h1 className="text-page-title font-semibold">
+            Could not open local Histask data
+          </h1>
+          <p className="text-ui text-muted-foreground">
+            The database was not reset or deleted. Retry opening it, or keep
+            this browser tab available and try again later.
+          </p>
+          <Button
+            className="justify-self-start"
+            onClick={() => {
+              setDatabaseState('loading')
+              setAttempt((value) => value + 1)
+            }}
+          >
+            Retry
+          </Button>
+        </section>
+      </main>
+    )
+  }
+
+  return (
+    <main className="grid min-h-svh place-items-center bg-background p-5">
+      <p className="text-ui text-muted-foreground" role="status">
+        Opening local Histask data…
+      </p>
+    </main>
+  )
+}
