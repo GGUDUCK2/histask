@@ -1,8 +1,9 @@
 # Histask v0.1 Development Plan
 
-작성일: 2026-09-08 (Asia/Seoul)  
-기준 디렉터리: `/Users/taeintyang/Documents/study/histask/histask`  
-상태: Batch 1–5 완료 / TASK-001–010 및 TASK-023–026 완료, 이후 Suggested Batch 미착수
+작성일: 2026-09-08 (Asia/Seoul)
+최종 갱신일: 2026-09-28 (Asia/Seoul)
+현재 기준 디렉터리: `D:\project\histask`
+상태: Batch 1–5 완료 / TASK-001–010 및 TASK-023–026 완료 / 날짜 결함 수정 완료 / Batch 6–11 미착수
 
 ## 기준 문서와 계획의 적용 범위
 
@@ -10,7 +11,7 @@
 - [AGENTS.md](AGENTS.md): 기술 규칙, 데이터 안전, 개발·검증 방식의 Source of Truth.
 - [DESIGN.md](DESIGN.md): UX, 정보 계층, 시각적 방향의 Source of Truth.
 - 이번 사용자 지시를 우선하며 세 문서를 함께 적용한다. 이 계획은 세 문서를 대체하거나 제품 범위를 확장하지 않는다. GitHub, 원격 브랜치, 원격 파일은 분석 근거로 사용하지 않았다.
-- 이번 변경은 이 문서뿐이다. 소스 구현, 패키지 설치, 설정 변경, commit/push는 수행하지 않았다. 아래 경로·패키지·명령 추가는 모두 이후 구현 작업이다.
+- 이번 최신화는 이 문서만 수정한다. 현재 작업 트리에 있는 직전 날짜 결함 수정 코드·테스트·README 변경도 현황에 반영하며, 이를 커밋된 상태로 가정하지 않는다. 패키지 설치·commit/push는 수행하지 않는다.
 
 ### 문서 간 표현 차이의 적용
 
@@ -23,77 +24,65 @@
 | Today 예시의 Created 누락 | PRD §22의 포함 조건을 보존한다. Created Today 보조 섹션을 두어 오늘 생성만 된 카드도 찾을 수 있게 한다. |
 | 데이터 안전의 Phase 번호 | 9개 Phase 분류는 유지한다. Phase 8의 구현은 앞당겨, 업무 입력 UI를 연결하기 전에 백업·복원 경로를 완성한다. |
 
-## 현재 로컬 프로젝트 분석
+## 현재 로컬 프로젝트 분석 (2026-09-28)
+
+### 현재 위치와 다음 작업
+
+- 완료: **TASK-001–010, TASK-023–026 / Batch 1–5**. 30개 Task 중 14개이며, 작업량 또는 사용자 관점 완성률을 뜻하지 않는다.
+- 미착수: **TASK-011–022, TASK-027–030 / Batch 6–11**. 다음 작업은 TASK-011 → TASK-012 → TASK-013이다.
+- 도메인·데이터 안전·Settings UI는 구현됐지만, 업무 화면은 아직 placeholder다. Search/New task 버튼은 비활성화되어 있다.
+- 다음 사용 가능한 핵심 흐름의 도착점은 **TASK-016**: Card 생성 → IN_PROGRESS → WorkLog 입력 → 보드 최신 로그 → DONE → 지표 갱신.
+- 기존 Task ID·의존성·Batch 순서는 유지한다. 완료 Task의 구현 범위/예상 파일 항목은 최초 계획이며, 최신 차이는 이 절과 각 Task의 후속 수정 기록을 기준으로 한다.
 
 ### 디렉터리와 구현 상태
 
 ```text
 histask/
-├── AGENTS.md / PRD.md / DESIGN.md
-├── README.md
+├── AGENTS.md / PRD.md / DESIGN.md / DEVELOPMENT_PLAN.md / README.md
 ├── package.json / package-lock.json
-├── vite.config.ts
-├── tsconfig.json / tsconfig.app.json / tsconfig.node.json
-├── .oxlintrc.json / .gitignore
-├── index.html
+├── vite.config.ts / vitest.config.ts / tsconfig*.json / components.json
 ├── src/
-│   ├── main.tsx
-│   ├── App.tsx / App.css / index.css
-│   └── assets/  (react.svg, vite.svg, hero.png)
-├── public/      (favicon.svg, icons.svg)
-├── node_modules/  (설치됨, Git 제외)
-├── dist/          (기존 빌드 산출물, Git 제외)
-└── .git/
+│   ├── app/                    # hash router, theme, route error
+│   ├── components/layout/      # shell, sidebar
+│   ├── components/ui/          # shadcn 기반 primitives
+│   ├── db/                     # schema v1 → v2, timestamp migration
+│   ├── repositories/           # 조회, 구독, transaction
+│   ├── services/               # Card/WorkLog/분류/board/dashboard/backup
+│   ├── features/settings/      # backup, DELETE, storage, theme
+│   ├── features/workspace/     # 업무 화면 placeholder
+│   ├── hooks/ / types/ / utils/ / test/
+│   └── App.tsx / main.tsx / App.css / index.css
+└── public/                     # favicon.svg, icons.svg; PWA 자산은 아직 없음
 ```
 
-분석 시작 시 `DEVELOPMENT_PLAN.md`는 없었으며, Git working tree는 clean이었다. 로컬 Git repository임을 확인했다. 원격 접속이나 fetch는 하지 않았다.
-
-| 점검 대상 | 실제 상태 | 계획에 미치는 영향 |
+| 점검 대상 | 실제 상태 | 남은 작업 |
 | --- | --- | --- |
-| React source | `main.tsx`는 StrictMode/createRoot. `App.tsx`는 Vite 로고·카운터·외부 문서 링크 템플릿 | 업무 기능 없음. Vite 재생성 없이 TASK-010에서 제품 shell로 교체 |
-| CSS | 템플릿용 큰 제목, 중앙 정렬, 1126px root 폭, 장식 이미지·여백. OS dark media query 존재 | Histask theme 구현 완료로 보지 않음. TASK-002에서 디자인 토큰 기반으로 정리 |
-| Vite | `plugins: [react()]`만 존재 | React plugin 유지. 필요한 Tailwind/PWA 통합만 추가 |
-| TypeScript | 프로젝트 references, noEmit, unused 검사. app은 bundler/react-jsx, node 설정은 nodenext | `strict`는 두 설정에 없고 상속도 없음. TASK-001에서 명시적으로 활성화 |
-| Oxlint | react/typescript/oxc plugins, hooks error, only-export-components warn | 그대로 유지. ESLint 전환·전역 규칙 무력화 없음 |
-| 테스트 | 저장소 내 test/spec 파일·테스트 설정·test script 없음 | TASK-001에서 Vitest/RTL와 실제 실행 테스트 도입 |
-| Tailwind | 직접 의존성·CSS 통합·Vite plugin 없음 | TASK-002에서 추가 |
-| shadcn/ui | `components.json`, UI components, alias 없음 | TASK-002에서 필요한 primitives만 설정 |
-| 도메인·저장소·라우팅 | types/db/repositories/features/router 모두 없음 | 새로운 경로임을 Task별 명시 |
-| PWA | manifest/service worker/plugin 없음 | TASK-027에서 추가 |
-| Node | `.nvmrc`, `.node-version`, `.npmrc`, package engines/packageManager 선언 없음 | NVM LTS 사용. 임의 patch pinning을 추가하지 않음 |
-| Lockfile | `package-lock.json`, lockfileVersion 3 | npm 유지. pnpm/Yarn/Bun 도입 없음 |
-| .gitignore | node_modules, dist, dist-ssr, logs, `*.local`, 일반 editor 파일 제외 | 기존 파일 유지. 실제 업무 백업·비밀정보를 commit하지 않음 |
-| README | Vite 기본 설명, Oxlint와 선택적 React Compiler 설명 | TASK-030에서 실제 Histask 사용·운영 설명으로 갱신 |
-| 기타 문서 | 루트의 세 기준 문서 외 architecture/database 문서 없음 | 필요한 기술 설명은 README 중심으로 작성, 문서 남발 없음 |
+| Toolchain | Vite/React/TypeScript strict/Oxlint/npm 유지. Vitest/RTL/fake-indexeddb 구성 | 기존 기반 재생성 불필요 |
+| 디자인 기반 | Tailwind, shadcn primitives, semantic tokens, Lucide, System/Light/Dark | 업무 화면 구현 및 TASK-029 전체 검토 |
+| 데이터 | 개별 entity, repository/service, 반응형 구독, 트랜잭션, schema v2 | 실제 브라우저 migration QA |
+| Card/WorkLog/분류 | CRUD·관계 삭제·완료·archive·최신 로그 서비스와 회귀 테스트 | TASK-011, 013–016, 019 UI 연결 |
+| Board/dashboard | latest/count projection 및 5개 지표 집계 구현 | TASK-011–013 실제 보드·지표·drag |
+| Shell | hash routing, sidebar, Settings 접근, mobile navigation | TASK-018/020 검색·단축키 연결 |
+| Settings/backup | export/validate/prepare/replace/DELETE UI, storage 상태·theme | 업무 화면 연결 후 TASK-016 복원 회귀, TASK-028 offline QA |
+| Search/filter/sort | 공통 검색·조합 필터·5종 정렬과 UI 미구현 | TASK-017–020 |
+| Calendar/Today | 메뉴·자리만 있음. 실제 날짜 조회와 화면 미구현 | TASK-021–022 |
+| PWA | manifest/service worker/vite-plugin-pwa 없음 | TASK-027–028 |
+| README | timestamp 정규화·DB v2/backup v1 설명 추가. 기존 toolchain 설명도 남음 | TASK-030 실제 실행·사용·운영 문서 완성 |
+| CI/runtime | 저장소 CI 및 Node pin 파일 없음. 현재 Windows PowerShell은 NVM 없음 | 호환 Node 사용 제한 기록, 공개 전 CI 검토 |
 
-### Dependencies / devDependencies
+### 의존성 현황
 
-`package.json` 선언과 현재 `npm ls --depth=0`의 설치 상태를 구분한다.
+2026-09-28 `package.json`, lockfile 및 `npm ls --depth=0` 확인 기준이다. 전체 선언은 package.json을 기준으로 하며 아래는 주요 설치 버전이다.
 
-| 구분 | 패키지 | 선언 | 로컬 설치 |
-| --- | --- | --- | --- |
-| dependencies | react | ^19.2.8 | 19.2.8 |
-| dependencies | react-dom | ^19.2.8 | 19.2.8 |
-| devDependencies | @types/node | ^24.13.3 | 24.13.3 |
-| devDependencies | @types/react | ^19.2.18 | 19.2.18 |
-| devDependencies | @types/react-dom | ^19.2.4 | 19.2.7 |
-| devDependencies | @vitejs/plugin-react | ^6.1.0 | 6.1.1 |
-| devDependencies | oxlint | ^1.79.0 | 1.82.0 |
-| devDependencies | typescript | ~6.0.2 | 6.0.3 |
-| devDependencies | vite | ^8.2.2 | 8.2.2 |
-
-아래 패키지는 현재 직접 의존성에 없다. 설치 시 현재 Vite/React/TypeScript/Node와의 peer/engine 호환성을 확인하고 npm lockfile에 반영한다. 이 계획은 아직 확인하지 않은 신규 패키지 버전을 고정하거나 호환성을 단정하지 않는다.
-
-| 시점 | 추가 대상과 목적 |
+| 구분 | 설치 상태 |
 | --- | --- |
-| TASK-001 | 개발 의존성: Vitest, @testing-library/react, @testing-library/dom(필요한 peer), @testing-library/jest-dom, @testing-library/user-event, jsdom, fake-indexeddb. UI와 IndexedDB 테스트 기반 |
-| TASK-002 | Tailwind CSS와 호환 Vite 통합 패키지, shadcn 초기화 및 필요한 primitive 의존성, class 결합 유틸, 단일 아이콘 체계(Lucide 우선). shadcn은 필요한 소스 컴포넌트를 관리하는 방식으로 사용 |
-| TASK-004 | dexie. 반응형 구독은 Dexie liveQuery를 경계 내부에서 사용하며 React 보조 패키지는 실제 필요할 때만 추가 |
-| TASK-010 | React Router의 선택한 호환 버전이 요구하는 라우팅 패키지 |
-| TASK-013 | 서로 호환되는 dnd-kit core/sortable/utilities 패키지 |
-| TASK-027 | 개발 의존성 vite-plugin-pwa와 필요한 정적 manifest/icon 자산 |
+| 기존 기반 | React/React DOM 19.2.8, Vite 8.2.2, TypeScript 6.0.3, Oxlint 1.82.0 |
+| UI/스타일 | Tailwind 및 Vite plugin 4.3.3, Radix primitives, Lucide 1.42.0, CVA/clsx/tailwind-merge |
+| 데이터/라우팅 | Dexie 4.4.5, React Router 8.3.1 |
+| 테스트 | Vitest 5.0.0, RTL 16.3.3, jsdom 30.0.1, fake-indexeddb 6.2.5, DOM matchers/user-event |
+| 아직 없음 | TASK-013의 dnd-kit, TASK-027의 vite-plugin-pwa |
 
-기존 stack 초기화, 전면 upgrade, React Compiler, ESLint, Redux, 중복 UI/날짜 라이브러리를 기본 Task로 만들지 않는다.
+TASK-001/002/004/010의 의존성 도입은 완료됐으므로 다시 설치하는 Task로 취급하지 않는다. 남은 패키지는 해당 Task에서 호환성을 확인하고 npm lockfile에 반영한다. 전면 upgrade, React Compiler, ESLint 전환은 계획하지 않는다.
 
 ### 현재 npm scripts와 실제 검증
 
@@ -103,20 +92,38 @@ histask/
 | build | `tsc -b && vite build` |
 | lint | `oxlint` |
 | preview | `vite preview` |
-| test / typecheck | 둘 다 없음 |
+| test | `vitest run` |
+| typecheck | `tsc -b` |
 
-2026-09-08 실제 실행 결과:
+2026-09-28 날짜 결함 수정 후 실제 실행 결과(이번 문서 편집에서 앱 검증을 다시 실행했다는 뜻은 아님):
 
 | 실행 | 결과 |
 | --- | --- |
-| 기존 `$HOME/.nvm/nvm.sh` 로드 후 `nvm use --lts` | PASS: Node v24.15.0 / npm v11.14.1 |
-| `npm ls --depth=0` | PASS: 위 로컬 직접 의존성 확인 |
+| `nvm use --lts` | 실행 불가: 현재 PowerShell에서 nvm 명령 없음. 설치된 Node v24.19.0 / npm v11.17.0 사용 |
 | `npm run lint` | PASS |
-| `npm run build -- --outDir /private/tmp/histask-plan-build-20260908` | PASS: TypeScript build 및 Vite production build. 기존 dist 보존을 위해 임시 경로 사용 |
-| `npm run test` | 미실행: script와 테스트 환경 없음 |
-| `npm run typecheck` | 미실행: 독립 script 없음. 현재 build의 tsc 단계만 검증됨 |
+| `npm run test` | PASS: 21개 테스트 파일 실행, 230개 테스트. 날짜 테스트는 Seoul/New York 두 프로젝트에서 실행 |
+| `npm run typecheck` | PASS |
+| `npm run build` | PASS: TypeScript 및 Vite production build |
+| `git diff --check` | PASS. Windows LF/CRLF 변환 안내는 공백 오류와 구분 |
 
-빌드 경고는 외부 outDir을 자동으로 비우지 않는다는 안내였으며 임시 출력 위치 때문에 발생했다. 삭제 옵션을 강제하지 않았다. 이는 현재 템플릿 검증이며 Histask 제품 기능이 완성되었다는 의미가 아니다.
+이번 문서 최신화에서는 `npm ls --depth=0`을 추가 실행해 PASS를 확인했다. 실제 브라우저 migration, 전체 업무 흐름, 설치/offline/업데이트 및 전 화면 접근성·반응형 QA는 이번 점검에서 실행하지 않았다. 기존 2026-09-08 Task별 UI 검토 완료 기록은 당시 이력으로 보존하며 현재 재검증으로 간주하지 않는다.
+
+### 후속 결함 수정 (2026-09-28, 완료)
+
+- 문제: backup이 시간대 offset을 포함한 ISO timestamp를 허용했지만 최신 로그 정렬·오늘 집계는 문자열 순서를 사용해 잘못된 결과가 발생했다.
+- 수정: `normalizeIsoTimestamp`로 모든 backup timestamp를 고정 길이 UTC `YYYY-MM-DDTHH:mm:ss.sssZ`로 정규화한다. 원문·관계·date-only dueDate는 보존한다.
+- 기존 데이터: 실제 DB **v1 → v2 migration**이 Card/Category/Tag/WorkLog timestamp를 원자적으로 변환한다. 실패 시 원래 v1 데이터·버전·settings를 보존하며 자동 reset하지 않는다.
+- 호환성: **DB schema version은 2, backup schemaVersion은 1**이다. 두 버전은 독립이며 기존 백업을 계속 읽는다.
+- 증거: `src/services/backup/timestamps.test.ts`, `src/db/migrations.test.ts`, `src/utils/dates.test.ts`. 혼합 offset/소수초, 최신 이력과 repository 순서, 로컬 날짜 경계, 전체 필드 정규화, 기존 DB 보존·재열기·rollback 회귀를 검증했다.
+- 관련 Task: TASK-003/004/007/009/024/025. 기존 완료 범위의 결함 수정이며 새로운 제품 기능이나 Batch 완료가 아니다.
+
+### 수익화 검토의 위치
+
+어필리에이트는 방향 검토만 진행했고 코드·제휴 가입·추적 기능은 추가하지 않았다. 공개 업무 가이드/추천 도구 페이지를 통한 작은 실험이 후보이며, 대상 사용자·상품·노출 방식은 미정이다. 현재 PRD의 Ads/Analytics 제외와 업무 데이터 비전송 원칙은 유지한다. 실제 구현 전에 허용 범위를 별도로 확정하며 TASK-001–030의 v0.1 완료 조건에 임의로 추가하지 않는다.
+
+### 최초 분석 이력
+
+2026-09-08 최초 계획은 macOS의 `/Users/taeintyang/Documents/study/histask/histask`에서 Vite 기본 템플릿을 대상으로 작성됐다. 당시에는 업무 코드·test/typecheck scripts·Tailwind/Dexie/Router가 없었고 lint/build만 검증했다. 그 시점의 패키지·경로·미구현 설명은 현재 상태가 아니므로 위 현황으로 대체했다.
 
 ## 구현 공통 계약
 
@@ -136,7 +143,8 @@ histask/
 | 항목 | 계약 |
 | --- | --- |
 | Status / Priority | TODO, IN_PROGRESS, WAITING, DONE / NONE, LOW, MEDIUM, HIGH. UI label만 별도 관리 |
-| 시간 | createdAt/updatedAt/completedAt/archivedAt는 ISO timestamp. dueDate는 시간을 갖지 않는 ISO 달력 날짜 `YYYY-MM-DD`로 취급하여 UTC 변환으로 하루가 이동하지 않게 함 |
+| 시간 | createdAt/updatedAt/completedAt/archivedAt는 고정 길이 UTC ISO timestamp `YYYY-MM-DDTHH:mm:ss.sssZ`. backup의 offset/소수초 표현은 정규화하고 기존 DB는 v2 migration으로 변환한다. dueDate는 ISO 달력 날짜 `YYYY-MM-DD`이며 UTC 변환하지 않는다. |
+| 버전 | DB schema는 2(v1 구조 보존 + timestamp migration), backup schemaVersion은 1. DB 버전 변경만으로 기존 backup을 거부하지 않는다. |
 | 오늘 | 사용자 로컬 날짜의 시작 이상, 다음 날짜 시작 미만. 고정 24시간 더하기를 피하고 DST/자정 경계를 테스트 |
 | 완료 전환 | DONE 진입 시 completedAt 설정, DONE 유지 편집 시 보존, DONE 이탈 시 해제, 재진입 시 새 완료 시각 |
 | 최신 WorkLog | createdAt 내림차순, 동률은 id 기반의 안정된 순서. 과거 로그 편집은 createdAt 순서를 바꾸지 않음. 편집·삭제·import 시 내용/개수/최신 항목 재계산 |
@@ -163,7 +171,7 @@ histask/
 
 ### 공통 Validation Gate G
 
-TASK-001에서 `test: vitest run`(비 watch), `typecheck: tsc -b` script를 추가하고 최소 하나의 유효한 테스트를 둔다. 기존 lint/build/dev/preview는 유지한다. 그 이후 각 Phase/Batch에서:
+TASK-001에서 `test: vitest run`(비 watch), `typecheck: tsc -b` scripts와 실제 테스트 도입을 완료했다. 기존 lint/build/dev/preview를 유지하며 각 Phase/Batch에서:
 
 ```bash
 nvm use --lts
@@ -302,10 +310,12 @@ DESIGN §20/23/24/27의 전체 원문 접근, 우선순위 label, due urgency, �
 ### Test / Validation
 G. 공백 입력·잘못된 날짜/enum, 월/연/윤일 경계, 자정, Asia/Seoul 및 DST 시간대 fixture, stale 경계와 미래 시각 테스트.
 
-## TASK-004 — Dexie schema v1과 무손실 versioning
+## TASK-004 — Dexie schema와 무손실 versioning (v1 기반, 현재 v2)
 
 ### 상태
 완료 (2026-09-08) — Batch 2 Validation Gate 및 schema 재열기·migration rollback 테스트 통과
+
+후속 수정 완료 (2026-09-28) — 실제 v1→v2 timestamp 정규화 migration 추가. 데이터·관계·settings 보존, 실패 rollback 및 기존 쿼리 정확성 회귀 통과. 실제 브라우저 migration QA는 미실행.
 
 ### Phase
 Phase 2 — Database & Repository
@@ -337,7 +347,7 @@ UI 없음. migration 실패는 이후 shell에서 구체적 비파괴 오류로 
 - 향후 변경은 명시적 Dexie migration으로만 추가하며 실패 시 데이터가 남는다.
 
 ### Test / Validation
-G. fake-indexeddb 생성/재열기/중복 key 테스트. 별도 테스트 DB의 v1→테스트용 다음 version fixture로 데이터 보존과 실패 rollback을 검증한다. 이 fixture를 불필요한 production v2로 추가하지 않는다. 실제 migration이 생기면 해당 migration 회귀 테스트를 필수로 추가한다.
+G. fake-indexeddb 생성/재열기/중복 key 테스트. 초기 migration 패턴 fixture를 유지하고, 현재 실제 v1→v2 정규화는 `src/db/migrations.test.ts`로 데이터·관계·설정 보존, 재열기, 변환 실패 rollback 및 최신 로그/오늘 집계를 검증한다. 이후 migration도 해당 회귀 테스트를 필수로 추가한다.
 
 ## TASK-005 — Repository 계약·반응형 구독·transaction 경계
 
@@ -563,6 +573,9 @@ G. route/새로고침/뒤로가기, navigation aria-current, sidebar keyboard/mo
 
 ## TASK-011 — Quick add와 Latest WorkLog 중심 Kanban
 
+### 상태
+미착수 (2026-09-28 현재)
+
 ### Phase
 Phase 4 — App Shell & Main Board
 
@@ -598,6 +611,9 @@ G. quick add/쓰기 실패/빈 열/무로그/긴 로그 UI 테스트, 양 테마
 
 ## TASK-012 — Compact reactive dashboard
 
+### 상태
+미착수 (2026-09-28 현재)
+
 ### Phase
 Phase 4 — App Shell & Main Board
 
@@ -631,6 +647,9 @@ DESIGN §9/15: 한 줄 summary 또는 높이 56–72px 내의 낮은 row. 지표
 G. domain 집계와 UI 값 연결, 상태 변경·archive·WorkLog 추가·삭제 갱신 테스트. 1366×768에서 업무 board의 세로 공간과 양 테마를 시각 확인.
 
 ## TASK-013 — dnd-kit 이동·수동 순서·실패 rollback
+
+### 상태
+미착수 (2026-09-28 현재)
 
 ### Phase
 Phase 4 — App Shell & Main Board
@@ -667,6 +686,9 @@ G. 순서 service unit/transaction rollback 테스트, pointer·keyboard·빈 �
 
 ## TASK-014 — Card detail drawer와 편집·archive·삭제
 
+### 상태
+미착수 (2026-09-28 현재)
+
 ### Phase
 Phase 5 — Card Detail & History
 
@@ -700,6 +722,9 @@ DESIGN §25/28/34/39–40: desktop 420–520px 우측 drawer, compact field row.
 G. 전체 필드 저장/취소/오류·archive/삭제 확인 UI 테스트, 긴 내용 scroll, 양 테마·desktop/mobile drawer focus 확인.
 
 ## TASK-015 — WorkLog 입력·history timeline·편집/삭제
+
+### 상태
+미착수 (2026-09-28 현재)
 
 ### Phase
 Phase 5 — Card Detail & History
@@ -736,6 +761,9 @@ G. RTL로 입력·단축키·IME·취소·실패 검증. timeline→board 갱신
 
 ## TASK-016 — 핵심 업무 흐름과 복원 후 이력 회귀
 
+### 상태
+미착수 (2026-09-28 현재)
+
 ### Phase
 Phase 5 — Card Detail & History
 
@@ -770,6 +798,9 @@ G + 실제 브라우저 새로고침과 핵심 흐름 smoke. DB/console 오류�
 
 ## TASK-017 — 공통 검색·조합 필터·정렬 service
 
+### 상태
+미착수 (2026-09-28 현재)
+
 ### Phase
 Phase 6 — Find & Organize
 
@@ -803,6 +834,9 @@ DESIGN §30–31: Card title → matching excerpt → category/tags 결과 계�
 G. 검색 대상별 match, 한국어/대소문자, 중복 log, 복합 AND/0결과, 날짜 범위·미지정, 5종 정렬과 안정성 테스트. fixture 데이터로 반복 조회 비용 점검.
 
 ## TASK-018 — Global search·filter bar·sort UI
+
+### 상태
+미착수 (2026-09-28 현재)
 
 ### Phase
 Phase 6 — Find & Organize
@@ -839,6 +873,9 @@ G. search/filter/Clear all/sort/navigation 통합, non-manual reorder 제한, fi
 
 ## TASK-019 — Category·Tag 관리 화면
 
+### 상태
+미착수 (2026-09-28 현재)
+
 ### Phase
 Phase 6 — Find & Organize
 
@@ -872,6 +909,9 @@ DESIGN §13/21–22/40/42: compact rows, Category 작은 색 점/label, Tag subt
 G. CRUD form/삭제 확인/취소, 관계 보존 UI 통합, 삭제된 active filter 처리, keyboard dialog focus 및 tag 대비 검증.
 
 ## TASK-020 — 전역 단축키와 입력 focus 규칙
+
+### 상태
+미착수 (2026-09-28 현재)
 
 ### Phase
 Phase 6 — Find & Organize
@@ -907,6 +947,9 @@ G. 각 입력 종류/contenteditable/combobox/IME/중첩 overlay 회귀 및 실�
 
 ## TASK-021 — 날짜 조회와 Mini Calendar
 
+### 상태
+미착수 (2026-09-28 현재)
+
 ### Phase
 Phase 7 — Time Views
 
@@ -940,6 +983,9 @@ DESIGN §14/29/40: 선택일 accent-soft, today subtle ring/text, activity 작�
 G. 월·연·윤일·자정·DST, 로그 여러 개의 중복 제거, archived 제외 테스트. keyboard 월 이동/날짜 선택 및 sidebar 220–260px 내부 시각 확인.
 
 ## TASK-022 — Today의 Due·Created·Updated·Completed
+
+### 상태
+미착수 (2026-09-28 현재)
 
 ### Phase
 Phase 7 — Time Views
@@ -1014,6 +1060,8 @@ G. Storage API 각 분기 mock, preference 재열기/OS 변경, DB 불가 상태
 
 ### 상태
 완료 (2026-09-08) — Batch 4 Validation Gate 및 전체 snapshot·invalid corpus·export/validate 왕복 테스트 통과
+
+후속 수정 완료 (2026-09-28) — 전체 backup timestamp의 UTC 정규화와 source 객체 불변성, 혼합 offset/소수초·날짜 경계 회귀 통과. backup schemaVersion 1 유지.
 
 ### Phase
 Phase 8 — Data Safety (Core Domain 직후 조기 구현)
@@ -1127,6 +1175,9 @@ G. 파일 읽기 실패/invalid/미지원 version/확인 취소/replace 성공·
 
 ## TASK-027 — Installable PWA와 offline app shell
 
+### 상태
+미착수 (2026-09-28 현재)
+
 ### Phase
 Phase 9 — Release Quality
 
@@ -1161,6 +1212,9 @@ DESIGN §8/33–37: 자체 font/icon, compact update 안내, 저장 중 내용 �
 G. production preview에서 manifest/install/service worker lifecycle, offline restart, app update 전후 데이터 보존 확인. dev-server 접속 성공만으로 통과하지 않는다.
 
 ## TASK-028 — 실제 브라우저 offline·데이터 안전 통합 QA
+
+### 상태
+미착수 (2026-09-28 현재)
 
 ### Phase
 Phase 9 — Release Quality
@@ -1197,6 +1251,9 @@ G + 실제 지원 desktop 브라우저에서 offline checklist. 설치/브라우
 
 ## TASK-029 — 반응형·테마·접근성 전체 일관성 검토
 
+### 상태
+미착수 (2026-09-28 현재)
+
 ### Phase
 Phase 9 — Release Quality
 
@@ -1231,6 +1288,9 @@ DESIGN §5–47 전체 review. desktop sidebar+board+420–520px drawer, tablet 
 G. 실제 viewport screenshot/시각 검토, keyboard-only 핵심 흐름, screen reader 기본 이름/역할/순서 확인. 새로운 자동 접근성 도구는 실제 필요 시 의존성 정책에 따라 도입하고 수동 검토를 대체하지 않는다.
 
 ## TASK-030 — 문서·최종 release Gate
+
+### 상태
+미착수 (2026-09-28 현재)
 
 ### Phase
 Phase 9 — Release Quality
@@ -1295,7 +1355,7 @@ TASK-001 → TASK-002 → TASK-003                 Foundation
 | Batch | 목표 | 포함 Task (권장 내부 순서) | 주요 결과 | Validation | 다음 Batch 진입 조건 |
 | --- | --- | --- | --- | --- | --- |
 | 1 — Foundation | 기존 toolchain 보완과 공통 설계 계약 | TASK-001 → TASK-002 → TASK-003 | strict/tests, Tailwind/shadcn/tokens, types/dates | G + 양 테마 primitive·날짜 경계; Phase 1 Gate | 실제 test script와 타입/디자인 기반이 검증됨 |
-| 2 — Data boundary | schema와 안전한 repository 기반 | TASK-004 → TASK-005 | v1 schema, 구독/transaction 경계 | G + DB 재열기/migration 실패/rollback; Phase 2 Gate | 데이터 보존 및 오류 전달 확인 |
+| 2 — Data boundary | schema와 안전한 repository 기반 | TASK-004 → TASK-005 | v1 기반 schema 및 현재 v2 migration, 구독/transaction 경계 | G + DB 재열기/migration 실패/rollback; Phase 2 Gate | 데이터 보존 및 오류 전달 확인 |
 | 3 — Core Domain | Card/WorkLog/분류의 일관성 | TASK-006 → TASK-007 → TASK-008 → TASK-009 | CRUD, 관계 삭제, 최신 로그, dashboard query | G + 핵심 domain 회귀; Phase 3 Gate | latest/count/unique-card 및 무손실 삭제 규칙 통과 |
 | 4 — Restore foundation | UI 이전 백업 안전성 확보 | TASK-024 → TASK-025 | 전체 export/validation/transactional replace/delete | G + invalid corpus/왕복/실패 rollback | 유효 파일만 교체하고 오류 시 원본 보존 |
 | 5 — Safe application entry | shell과 데이터 보호 사용자 경로 | TASK-010 → TASK-023 → TASK-026 | compact shell, persistence/theme/settings, backup/DELETE UI | G + local file round trip/확인 취소/focus; Phase 8 Gate | 업무 입력 전에 backup/restore 접근 가능 |
@@ -1332,7 +1392,7 @@ TASK-001 → TASK-002 → TASK-003                 Foundation
 | dnd-kit 열 이동/내부 순서/영속/실패 rollback | §21 | TASK-006, TASK-013, TASK-018 |
 | Today Due/Created/새 WorkLog/Completed 포함 | §22 | TASK-003, TASK-021, TASK-022 |
 | Mini calendar 월 탐색/활동/선택일 Due·Updated·Completed | §23 | TASK-021, TASK-022 |
-| Dexie / schema v1 / indexes / repository / migration | §26–28 | TASK-004, TASK-005, TASK-006–008 |
+| Dexie / schema v1 기반 및 현재 v2 migration / indexes / repository | §26–28 | TASK-004, TASK-005, TASK-006–008 |
 | Persistent Storage 확인·요청·한계 표시 | §29 | TASK-023, TASK-026 |
 | JSON 전체 export / filename / archive 포함 | §30 | TASK-024, TASK-026, TASK-028 |
 | Backup 전체 validation 전 무변경 / Replace only / transaction | §31 | TASK-024, TASK-025, TASK-026, TASK-016 |
@@ -1374,22 +1434,22 @@ TASK-001 → TASK-002 → TASK-003                 Foundation
 
 ## Final Acceptance Checklist
 
-구현 전이므로 아래는 모두 미체크 상태다. 계획 작성 완료와 제품 구현 완료를 혼동하지 않는다.
+2026-09-28 코드 및 자동 테스트 기준으로 확인한 항목만 체크했다. 서비스 검증과 실제 UI/브라우저 검증이 함께 필요한 항목은 일부 구현되어도 미체크로 둔다. 체크된 항목도 최종 출시 Gate에서 재확인하며, 전체 제품 완료를 의미하지 않는다.
 
 ### Build
 
 - [ ] NVM LTS 환경과 npm lockfile을 사용하고 기존 Vite/React/TypeScript/Oxlint를 유지한다.
-- [ ] 실제 `npm run lint`, `npm run test`, `npm run typecheck`, `npm run build`가 통과한다.
+- [x] 실제 `npm run lint`, `npm run test`, `npm run typecheck`, `npm run build`가 통과한다. (2026-09-28, 230 tests)
 - [ ] TypeScript strict, 유효한 자동 테스트, production build가 있으며 차단성 console 오류가 없다.
-- [ ] React Compiler/ESLint 전환/불필요한 대규모 dependency upgrade가 없다.
+- [x] React Compiler/ESLint 전환/불필요한 대규모 dependency upgrade가 없다.
 
 ### Data
 
-- [ ] Card/WorkLog/Category/Tag/CardTag가 개별 entity로 IndexedDB에 저장된다.
-- [ ] schema v1 재열기·migration 보존/실패 테스트와 repository/transaction 경계가 있다.
+- [x] Card/WorkLog/Category/Tag/CardTag가 개별 entity로 IndexedDB에 저장된다.
+- [x] schema 재열기·실제 v1→v2 migration 보존/실패 테스트와 repository/transaction 경계가 있다. (fake-indexeddb; 실제 브라우저 migration QA는 별도)
 - [ ] Card CRUD/status/sort/completion/archive 동작이 새로고침 후 유지된다.
-- [ ] Category 삭제는 연결만 해제, Tag 삭제는 관계만 제거, Card 삭제는 WorkLog/CardTag cascade이며 실패 시 rollback한다.
-- [ ] timestamp/date-only/로컬 today 의미가 일관되고 stale helper가 있다.
+- [x] Category 삭제는 연결만 해제, Tag 삭제는 관계만 제거, Card 삭제는 WorkLog/CardTag cascade이며 실패 시 rollback한다. (서비스 구현·회귀 기준)
+- [x] timestamp/date-only/로컬 today 의미가 일관되고 stale helper가 있다. (UTC 정규화·날짜 유틸 회귀 기준)
 - [ ] 업무 데이터 전송, backend, 인증, cloud storage, analytics/telemetry/remote logging, 자동 DB reset이 없다.
 
 ### Board
@@ -1401,7 +1461,7 @@ TASK-001 → TASK-002 → TASK-003                 Foundation
 
 ### WorkLog
 
-- [ ] 독립 history CRUD, 부모 updatedAt transaction, newest-first 순서가 맞다.
+- [x] 독립 history CRUD, 부모 updatedAt transaction, newest-first 순서가 맞다. (서비스 기준; history UI 미구현)
 - [ ] Board에서 최신 로그가 제목 다음 계층에 보이고 최대 2줄이며 hover/focus 원문 tooltip이 된다.
 - [ ] create/edit/delete/import 후 최신 preview/count가 즉시 재계산된다.
 - [ ] 마지막 로그 삭제 후 no-log placeholder, 과거 로그 편집 시 생성 순서 유지가 맞다.
@@ -1410,7 +1470,7 @@ TASK-001 → TASK-002 → TASK-003                 Foundation
 ### Dashboard
 
 - [ ] 비보관 Total/In Progress/Waiting/Done/Updated Today 5개가 반응형으로 정확하다.
-- [ ] Updated Today는 오늘 새 WorkLog를 가진 Card를 한 번만 센다.
+- [x] Updated Today는 오늘 새 WorkLog를 가진 Card를 한 번만 센다. (집계 서비스 기준; 지표 UI 미구현)
 - [ ] 자정/탭 복귀 시 갱신하고 compact metrics row가 board 공간을 과도하게 소비하지 않는다.
 
 ### Search / Filter
@@ -1429,12 +1489,12 @@ TASK-001 → TASK-002 → TASK-003                 Foundation
 
 ### Backup
 
-- [ ] Storage API 상태/요청/미지원/거절/오류를 설명하고 영구 보존을 보장한다고 표현하지 않는다.
-- [ ] export가 모든 업무 collection과 보관 이력을 포함하며 filename/envelope가 맞다.
-- [ ] 전체 parse/validation/prepare 이후 확인을 거쳐 Replace transaction을 수행한다.
-- [ ] invalid/incompatible/duplicate/orphan payload와 중간 쓰기 실패에서 기존 데이터가 그대로 남는다.
+- [x] Storage API 상태/요청/미지원/거절/오류를 설명하고 영구 보존을 보장한다고 표현하지 않는다.
+- [x] export가 모든 업무 collection과 보관 이력을 포함하며 filename/envelope가 맞다.
+- [x] 전체 parse/validation/prepare 이후 확인을 거쳐 Replace transaction을 수행한다.
+- [x] invalid/incompatible/duplicate/orphan payload와 중간 쓰기 실패에서 기존 데이터가 그대로 남는다.
 - [ ] 정상 export→import→재열기의 관계/원문/순서/최신 preview가 일치한다.
-- [ ] Delete All은 정확한 DELETE 입력과 확인이 필요하고 모든 data/settings가 원자적으로 삭제된다.
+- [x] Delete All은 정확한 DELETE 입력과 확인이 필요하고 모든 data/settings가 원자적으로 삭제된다.
 
 ### Offline / PWA
 
@@ -1449,7 +1509,7 @@ TASK-001 → TASK-002 → TASK-003                 Foundation
 - [ ] tokens/typography/spacing/radius/neutral border/작은 icons가 일관된다.
 - [ ] Latest WorkLog, restrained tags, timeline, compact drawer/metrics/sidebar가 DESIGN 기준과 일치한다.
 - [ ] generic shadcn dashboard, Trello 외형 복제, 대형 metric/card/text, heavy shadow, gradient, glassmorphism, rainbow tags, 과도한 여백이 없다.
-- [ ] System/Light/Dark와 로컬 설정 보존이 되고 외부 font CDN에 의존하지 않는다.
+- [x] System/Light/Dark와 로컬 설정 보존이 되고 외부 font CDN에 의존하지 않는다.
 
 ### Accessibility
 
@@ -1472,9 +1532,9 @@ TASK-001 → TASK-002 → TASK-003                 Foundation
 - [ ] PRD/Design coverage가 구현/테스트에 연결되고 미실행 검증을 성공으로 기록하지 않았다.
 - [ ] production 자동 seed, 실제 업무 fixture/backup commit, 요청 없는 commit/push가 없다.
 
-## 계획 자체 검토
+## 최초 계획 자체 검토 (2026-09-08 이력)
 
-이 항목은 **계획 문서의 검토 결과**이며 위 구현 체크리스트의 완료를 의미하지 않는다.
+이 항목은 **최초 계획 작성 당시의 검토 결과**다. 아래의 현재/이번 변경 표현은 2026-09-08 기준이며 최신 현황·구현 완료 증거가 아니다. 최신 상태는 문서 앞부분과 Final Acceptance Checklist를 따른다.
 
 | 검토 질문 | 결과와 근거 |
 | --- | --- |

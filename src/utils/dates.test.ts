@@ -9,11 +9,24 @@ import {
   isOnLocalDay,
   isStale,
   localDayRange,
+  normalizeIsoTimestamp,
   parseLocalDate,
   toLocalDateKey,
 } from './dates'
 
 describe('ISO validation', () => {
+  it.each([
+    ['2026-09-08T10:00:00+09:00', '2026-09-08T01:00:00.000Z'],
+    ['2026-09-07T21:00:00.1-04:00', '2026-09-08T01:00:00.100Z'],
+    ['2026-09-08T01:00:00.12Z', '2026-09-08T01:00:00.120Z'],
+  ])('normalizes %s to fixed-width UTC', (input, expected) => {
+    expect(normalizeIsoTimestamp(input)).toBe(expected)
+    expect(normalizeIsoTimestamp(expected)).toBe(expected)
+  })
+  it.each(['invalid', '2026-02-30T00:00:00Z', '0001-01-01T00:00:00+09:00', '9999-12-31T23:59:59-09:00'])(
+    'rejects invalid or out-of-range normalized timestamps %s',
+    input => expect(() => normalizeIsoTimestamp(input)).toThrow(RangeError),
+  )
   it.each(['2028-02-29', '2026-12-31', '0001-01-01'])(
     'accepts real date %s',
     (value) => expect(isDateOnly(value)).toBe(true),

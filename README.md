@@ -1,4 +1,12 @@
-# React + TypeScript + Vite
+# Histask
+
+## Timestamp storage and migration
+
+Business timestamps are stored as fixed-width UTC ISO strings (`YYYY-MM-DDTHH:mm:ss.sssZ`) so IndexedDB date indexes and latest WorkLog ordering use chronological order. Backup import accepts ISO timezone offsets and normalizes timestamps before replacement. Calendar-only `dueDate` values remain unchanged.
+
+Database version 2 atomically normalizes existing version 1 timestamps, preserving task content, relationships, and settings. If normalization fails, the upgrade rolls back without resetting or deleting the database. Backup `schemaVersion` remains **1**: existing backup files remain compatible. Database and backup versions are independent.
+
+## Original toolchain notes
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 

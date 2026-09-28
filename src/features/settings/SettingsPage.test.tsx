@@ -65,7 +65,7 @@ describe('Settings', () => {
     expect(document.documentElement).toHaveClass('dark')
     expect(screen.getByText('IndexedDB')).toBeVisible()
     expect(screen.getByText('Database schema')).toBeVisible()
-    expect(screen.getByText('1')).toBeVisible()
+    expect(screen.getByText('2')).toBeVisible()
   })
 
   it('exports through a local object URL and releases it', async () => {

@@ -22,7 +22,7 @@ import {
 
 afterEach(clearTestDatabases);
 
-describe("Histask schema v1", () => {
+describe("Histask database schema", () => {
   it("creates every table and the indexes used by planned access patterns", async () => {
     const database = trackTestDatabase(
       new HistaskDatabase(testDatabaseName("schema")),
@@ -48,7 +48,7 @@ describe("Histask schema v1", () => {
     );
   });
 
-  it("preserves every entity and setting when schema v1 is reopened", async () => {
+  it("preserves every entity and setting when the database is reopened", async () => {
     const name = testDatabaseName("reopen");
     const first = trackTestDatabase(new HistaskDatabase(name));
     const card = cardFixture({ id: "card-1", categoryId: "category-1" });

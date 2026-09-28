@@ -4,7 +4,7 @@ import {
   type BackupPayload,
 } from '@/types/backup'
 import type { Card, CardTag, Category, Tag, WorkLog } from '@/types/domain'
-import { isDateOnly, isIsoTimestamp } from '@/utils/dates'
+import { isDateOnly, normalizeIsoTimestamp } from '@/utils/dates'
 import {
   isCardStatus,
   isClassificationColor,
@@ -29,8 +29,11 @@ function optionalText(value: unknown, path: string): string | undefined {
 }
 
 function timestamp(value: unknown, path: string): string {
-  if (!isIsoTimestamp(value)) return invalidField(path)
-  return value
+  try {
+    return normalizeIsoTimestamp(value)
+  } catch {
+    return invalidField(path)
+  }
 }
 
 function optionalTimestamp(

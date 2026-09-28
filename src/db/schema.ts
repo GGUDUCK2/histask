@@ -1,5 +1,5 @@
 export const HISTASK_DATABASE_NAME = "Histask";
-export const DATABASE_SCHEMA_VERSION = 1;
+export const DATABASE_SCHEMA_VERSION = 2;
 
 export interface SettingRecord {
   key: string;

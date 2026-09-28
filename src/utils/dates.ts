@@ -30,6 +30,14 @@ export function isIsoTimestamp(value: unknown): value is string {
   return Number.isFinite(Date.parse(value))
 }
 
+/** Fixed-width UTC timestamps preserve chronological order in IndexedDB indexes. */
+export function normalizeIsoTimestamp(value: unknown): string {
+  if (!isIsoTimestamp(value)) throw new RangeError('Invalid timestamp')
+  const normalized = new Date(value).toISOString()
+  if (!isIsoTimestamp(normalized)) throw new RangeError('Timestamp outside supported years')
+  return normalized
+}
+
 function requireDate(date: Date): Date {
   if (!Number.isFinite(date.getTime())) throw new RangeError('Invalid date')
   return date

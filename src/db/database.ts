@@ -1,6 +1,7 @@
 import Dexie, { type Table } from "dexie";
 import type { Card, CardTag, Category, Tag, WorkLog } from "@/types/domain";
 import { HistaskDataError } from "@/services/data-errors";
+import { normalizeStoredTimestamps } from './migrations';
 import {
   DATABASE_SCHEMA_VERSION,
   HISTASK_DATABASE_NAME,
@@ -18,7 +19,10 @@ export class HistaskDatabase extends Dexie {
 
   constructor(name = HISTASK_DATABASE_NAME) {
     super(name);
-    this.version(DATABASE_SCHEMA_VERSION).stores(schemaV1);
+    this.version(1).stores(schemaV1);
+    this.version(DATABASE_SCHEMA_VERSION)
+      .stores(schemaV1)
+      .upgrade(normalizeStoredTimestamps);
   }
 }
 
