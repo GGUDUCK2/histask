@@ -15,7 +15,16 @@ export interface BoardCardProjection {
   workLogCount: number
 }
 
-function compareCardsManual(left: Card, right: Card): number {
+export interface WorkspaceSnapshot {
+  cards: BoardCardProjection[]
+  workLogsByCard: ReadonlyMap<string, readonly WorkLog[]>
+  categories: Category[]
+  tags: Tag[]
+  categoryCardCounts: ReadonlyMap<string, number>
+  tagCardCounts: ReadonlyMap<string, number>
+}
+
+export function compareCardsManual(left: Card, right: Card): number {
   return left.sortOrder - right.sortOrder || left.id.localeCompare(right.id)
 }
 
@@ -28,7 +37,16 @@ export class BoardQueryService {
     this.transactions = new HistaskTransactionRunner(database)
   }
 
-  getCards(): Promise<BoardCardProjection[]> {
+  async getCards(): Promise<BoardCardProjection[]> {
+    const snapshot = await this.getWorkspaceSnapshot()
+    return snapshot.cards
+  }
+
+  observeCards(): RepositoryQuery<BoardCardProjection[]> {
+    return createRepositoryQuery('observe board cards', () => this.getCards())
+  }
+
+  getWorkspaceSnapshot(): Promise<WorkspaceSnapshot> {
     return this.transactions.read(
       ['cards', 'categories', 'tags', 'cardTags', 'workLogs'],
       async () => {
@@ -44,18 +62,41 @@ export class BoardQueryService {
           .filter(({ archivedAt }) => archivedAt === undefined)
           .sort(compareCardsManual)
         const cardIds = new Set(cards.map(({ id }) => id))
-        const categoryById = new Map(
-          categories.map((category) => [category.id, category]),
+        const sortedCategories = [...categories].sort((left, right) =>
+          left.name.localeCompare(right.name) || left.id.localeCompare(right.id),
         )
-        const tagById = new Map(tags.map((tag) => [tag.id, tag]))
+        const sortedTags = [...tags].sort((left, right) =>
+          left.name.localeCompare(right.name) || left.id.localeCompare(right.id),
+        )
+        const categoryById = new Map(
+          sortedCategories.map((category) => [category.id, category]),
+        )
+        const tagById = new Map(sortedTags.map((tag) => [tag.id, tag]))
         const tagIdsByCard = new Map<string, string[]>()
         const logsByCard = new Map<string, WorkLog[]>()
+        const categoryCardCounts = new Map<string, number>()
+        const tagCardCounts = new Map<string, number>()
+
+        for (const card of cards) {
+          if (card.categoryId && categoryById.has(card.categoryId)) {
+            categoryCardCounts.set(
+              card.categoryId,
+              (categoryCardCounts.get(card.categoryId) ?? 0) + 1,
+            )
+          }
+        }
 
         for (const relation of relations) {
           if (!cardIds.has(relation.cardId)) continue
           const cardTagIds = tagIdsByCard.get(relation.cardId) ?? []
           cardTagIds.push(relation.tagId)
           tagIdsByCard.set(relation.cardId, cardTagIds)
+          if (tagById.has(relation.tagId)) {
+            tagCardCounts.set(
+              relation.tagId,
+              (tagCardCounts.get(relation.tagId) ?? 0) + 1,
+            )
+          }
         }
         for (const log of logs) {
           if (!cardIds.has(log.cardId)) continue
@@ -64,10 +105,12 @@ export class BoardQueryService {
           logsByCard.set(log.cardId, cardLogs)
         }
 
-        return cards.map((card) => {
+        const sortedLogsByCard = new Map<string, readonly WorkLog[]>()
+        const projections: BoardCardProjection[] = cards.map((card) => {
           const cardLogs = (logsByCard.get(card.id) ?? []).sort(
             compareWorkLogsNewestFirst,
           )
+          sortedLogsByCard.set(card.id, cardLogs)
           const cardTags = (tagIdsByCard.get(card.id) ?? [])
             .map((tagId) => tagById.get(tagId))
             .filter((tag): tag is Tag => tag !== undefined)
@@ -83,11 +126,22 @@ export class BoardQueryService {
             workLogCount: cardLogs.length,
           }
         })
+
+        return {
+          cards: projections,
+          workLogsByCard: sortedLogsByCard,
+          categories: sortedCategories,
+          tags: sortedTags,
+          categoryCardCounts,
+          tagCardCounts,
+        }
       },
     )
   }
 
-  observeCards(): RepositoryQuery<BoardCardProjection[]> {
-    return createRepositoryQuery('observe board cards', () => this.getCards())
+  observeWorkspaceSnapshot(): RepositoryQuery<WorkspaceSnapshot> {
+    return createRepositoryQuery('observe workspace snapshot', () =>
+      this.getWorkspaceSnapshot(),
+    )
   }
 }

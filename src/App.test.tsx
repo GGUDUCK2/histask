@@ -31,8 +31,9 @@ describe('application entry and routing', () => {
     const allTasks = within(primary).getByRole('link', { name: 'All Tasks' })
     expect(allTasks).toHaveAttribute('aria-current', 'page')
     expect(within(primary).getAllByRole('link')).toHaveLength(5)
-    expect(screen.getByRole('button', { name: 'Search tasks' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'New task' })).toBeDisabled()
+    const banner = screen.getByRole('banner')
+    expect(within(banner).getByRole('combobox', { name: 'Search tasks' })).toBeEnabled()
+    expect(within(banner).getByRole('button', { name: 'New task' })).toBeEnabled()
 
     await user.click(within(primary).getByRole('link', { name: 'Waiting' }))
     expect(await screen.findByRole('heading', { name: 'Waiting' })).toBeVisible()

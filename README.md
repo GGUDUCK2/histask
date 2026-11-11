@@ -1,6 +1,30 @@
 # Histask
 
-Histask는 브라우저 로컬 IndexedDB(`Dexie.js`)를 사용하는 Local-first 개인 업무 관리 애플리케이션입니다.
+Histask는 브라우저 로컬 IndexedDB(`Dexie.js`)를 사용하는 Local-first 개인 업무 관리 애플리케이션입니다. 모든 업무 데이터는 외부 서버로 전송되지 않고 사용자 브라우저에만 저장되며, 각 업무 카드에서 **가장 최근 WorkLog 진행 이력**을 즉시 확인할 수 있도록 설계되었습니다.
+
+> 현재 패키지 버전: `0.0.0` (`Histask v0.1` 기능 기준, DB 스키마 `2`, 백업 `schemaVersion: 1` — 앱 내 **Settings → About** 표시와 동일)
+
+---
+
+## 주요 기능 및 단축키
+
+- **Kanban 보드 & Latest WorkLog**: `To Do`, `In Progress`, `Waiting`, `Done` 4개 열에서 카드를 관리하고, 각 카드에서 최신 WorkLog(최대 2줄 + hover/focus 원문 tooltip)를 바로 확인합니다.
+- **드래그 및 비드래그 이동**: `@dnd-kit`으로 열 이동과 수동 정렬(`Manual`) 순서를 저장하며, 키보드/비드래그 사용자는 카드의 **Task actions** 메뉴로 상태 변경과 상하 이동을 수행할 수 있습니다.
+- **WorkLog 타임라인**: 카드 상세 Drawer에서 최신순(`newest-first`) 진행 이력을 추가·수정·삭제합니다. 입력 중 `Enter`는 줄바꿈, `Ctrl/Cmd + Enter` 또는 **Save** 버튼으로 저장합니다.
+- **실시간 Dashboard 지표**: 활성 필터와 독립적으로 비보관 기준 `Total`, `In Progress`, `Waiting`, `Done`, `Updated Today`(오늘 신규 WorkLog를 가진 고유 카드 수)를 표시합니다.
+- **검색·조합 필터·정렬**: Global Search(`/`)로 제목·설명·Category·Tag·WorkLog 내용을 부모 카드 단위로 검색하고, Category·Tag·Status·Priority·Due 조건을 AND로 조합해 정렬할 수 있습니다.
+- **Today & Mini Calendar**: 사이드바 Mini Calendar에서 날짜별 활동 표시를 확인하고, **Today**(`/#/today`) 및 날짜별 화면(`/#/date/YYYY-MM-DD`)에서 마감(Due)·갱신(Updated)·완료(Completed)·생성(Created) 기준 업무를 조회합니다.
+- **테마 & 전역 단축키**: **Settings**에서 `System` / `Light` / `Dark` 테마를 전환할 수 있습니다. 입력창·모달 포커스·IME 조합 중이 아닐 때 `N`(새 카드), `/`(검색 포커스), `Esc`(모달·Drawer 닫기)가 동작합니다.
+
+---
+
+## PWA·오프라인 및 데이터 경계
+
+- **PWA 오프라인 앱 셸**: `vite-plugin-pwa`(Workbox `registerType: 'prompt'`)로 정적 앱 셸(`index.html`, JS/CSS/SVG/PNG/manifest)만 precache합니다. 새 버전이 배포되면 편집 중인 내용을 강제 새로고침으로 덮어쓰지 않고 업데이트 알림 배너로 재적용 시점을 선택할 수 있습니다.
+- **데이터 계층 분리**: IndexedDB(`Histask`)는 업무 데이터(Cards, WorkLogs, Categories, Tags, CardTags, Settings) 전용이며, Service Worker 정적 캐시를 데이터베이스 대용으로 사용하지 않습니다.
+- **코드 경계**: 화면 계층은 `React UI → features/hooks & services → repositories → Dexie (IndexedDB)` 순으로만 접근하며, 백엔드 API·인증·클라우드 동기화·외부 텔레메트리는 포함하지 않습니다.
+
+---
 
 ## Timestamp storage and migration
 
@@ -114,6 +138,8 @@ Histask의 모든 업무 데이터는 서버가 아닌 **현재 사용 중인 �
   3. **Review**를 클릭한 뒤 확인 대화상자에서 **Replace data**를 클릭하면 단일 트랜잭션으로 전체 데이터가 안전하게 교체됩니다. (검증 실패 시 기존 데이터는 일절 변경되지 않습니다.)
 - **브라우저 저장소 보호 요청**:
   - **Settings** → **Data** → **Browser storage**에서 **Request persistence** 버튼을 클릭해 브라우저가 저장 공간 부족 시 임의로 IndexedDB를 정리하지 않도록 요청할 수 있습니다. (단, 브라우저 캐시/사이트 데이터 수동 삭제 시에는 지워질 수 있으므로 주기적인 JSON 백업을 권장합니다.)
+- **전체 데이터 영구 삭제**:
+  - **Settings** → **Data** → **Delete all data** → **Delete…**에서 확인 문구 `DELETE`를 정확히 입력해야 모든 카드, WorkLog, Category, Tag, CardTag 및 로컬 테마 설정이 단일 트랜잭션으로 삭제됩니다. (삭제 시 테마는 `System` 기본값으로 복귀합니다.)
 
 ### 9. 도메인 변경 시 데이터 마이그레이션 주의사항
 

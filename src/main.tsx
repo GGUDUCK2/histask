@@ -2,7 +2,10 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { initPwaRegistration } from './app/pwa'
 import { ThemeProvider } from './app/ThemeProvider'
+
+initPwaRegistration()
 
 const root = createRoot(document.getElementById('root')!)
 // A development-only visual test fixture; excluded from the production bundle.

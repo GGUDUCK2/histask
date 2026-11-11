@@ -1,17 +1,17 @@
 # Histask v0.1 Development Plan
 
 작성일: 2026-09-08 (Asia/Seoul)
-최종 갱신일: 2026-09-28 (Asia/Seoul)
-현재 기준 디렉터리: `D:\project\histask`
-상태: Batch 1–5 완료 / TASK-001–010 및 TASK-023–026 완료 / 날짜 결함 수정 완료 / Batch 6–11 미착수
+최종 갱신일: 2026-11-11 (Asia/Seoul)
+현재 기준 디렉터리: `/Users/taeintyang/Documents/study/histask`
+상태: Batch 1–11 구현 완료 / TASK-001–027·029–030 완료, TASK-028 부분 완료(preview SW 등록·precache·영속성·export 검증; 네트워크 단절 재시작·OS PWA 설치는 live HTTPS 환경 확인 필요)
 
 ## 기준 문서와 계획의 적용 범위
 
 - [PRD.md](PRD.md): 제품 범위와 기능의 Source of Truth.
 - [AGENTS.md](AGENTS.md): 기술 규칙, 데이터 안전, 개발·검증 방식의 Source of Truth.
 - [DESIGN.md](DESIGN.md): UX, 정보 계층, 시각적 방향의 Source of Truth.
-- 이번 사용자 지시를 우선하며 세 문서를 함께 적용한다. 이 계획은 세 문서를 대체하거나 제품 범위를 확장하지 않는다. GitHub, 원격 브랜치, 원격 파일은 분석 근거로 사용하지 않았다.
-- 이번 최신화는 이 문서만 수정한다. 현재 작업 트리에 있는 직전 날짜 결함 수정 코드·테스트·README 변경도 현황에 반영하며, 이를 커밋된 상태로 가정하지 않는다. 패키지 설치·commit/push는 수행하지 않는다.
+- 이번 사용자 지시를 우선하며 세 문서를 함께 적용한다. 이 계획은 세 문서를 대체하거나 제품 범위를 확장하지 않는다.
+- 2026-11-11 최종 갱신에서는 Batch 6–11 구현·테스트·PWA 빌드 및 로컬 `vite preview` 검증 결과를 반영하고 `README.md`를 현행화했다.
 
 ### 문서 간 표현 차이의 적용
 
@@ -24,67 +24,61 @@
 | Today 예시의 Created 누락 | PRD §22의 포함 조건을 보존한다. Created Today 보조 섹션을 두어 오늘 생성만 된 카드도 찾을 수 있게 한다. |
 | 데이터 안전의 Phase 번호 | 9개 Phase 분류는 유지한다. Phase 8의 구현은 앞당겨, 업무 입력 UI를 연결하기 전에 백업·복원 경로를 완성한다. |
 
-## 현재 로컬 프로젝트 분석 (2026-09-28)
+## 현재 로컬 프로젝트 분석 (2026-11-11)
 
 ### 현재 위치와 다음 작업
 
-- 완료: **TASK-001–010, TASK-023–026 / Batch 1–5**. 30개 Task 중 14개이며, 작업량 또는 사용자 관점 완성률을 뜻하지 않는다.
-- 미착수: **TASK-011–022, TASK-027–030 / Batch 6–11**. 다음 작업은 TASK-011 → TASK-012 → TASK-013이다.
-- 도메인·데이터 안전·Settings UI는 구현됐지만, 업무 화면은 아직 placeholder다. Search/New task 버튼은 비활성화되어 있다.
-- 다음 사용 가능한 핵심 흐름의 도착점은 **TASK-016**: Card 생성 → IN_PROGRESS → WorkLog 입력 → 보드 최신 로그 → DONE → 지표 갱신.
-- 기존 Task ID·의존성·Batch 순서는 유지한다. 완료 Task의 구현 범위/예상 파일 항목은 최초 계획이며, 최신 차이는 이 절과 각 Task의 후속 수정 기록을 기준으로 한다.
+- 완료: **TASK-001–027, TASK-029–030** (v0.1 구현 전체와 통합·회귀 테스트·프로덕션 프리뷰 시각/반응형 검토 완료).
+- 부분 완료: **TASK-028** — `http://localhost:4173/` 프로덕션 프리뷰에서 `manifest.webmanifest`, `sw.js`, Workbox precache 및 IndexedDB 영속성/백업 export/전역 검색/모바일 반응형을 확인했으나, 웹뷰 환경에서 `context.setOffline`이 제공되지 않아 강제 오프라인 단절 재시작과 실제 OS PWA 설치 프롬프트는 Cloudflare Pages HTTPS 배포 후 최종 확인 항목으로 남겼다.
+- 기존 Task ID·의존성·Batch 순서는 유지한다.
 
 ### 디렉터리와 구현 상태
 
 ```text
 histask/
 ├── AGENTS.md / PRD.md / DESIGN.md / DEVELOPMENT_PLAN.md / README.md
-├── package.json / package-lock.json
+├── .nvmrc / package.json / package-lock.json
 ├── vite.config.ts / vitest.config.ts / tsconfig*.json / components.json
 ├── src/
-│   ├── app/                    # hash router, theme, route error
-│   ├── components/layout/      # shell, sidebar
-│   ├── components/ui/          # shadcn 기반 primitives
+│   ├── app/                    # hash router, theme, pwa registration, route error
+│   ├── components/layout/      # shell, sidebar, PWA update banner
+│   ├── components/ui/          # shadcn/Radix 기반 primitives
 │   ├── db/                     # schema v1 → v2, timestamp migration
 │   ├── repositories/           # 조회, 구독, transaction
-│   ├── services/               # Card/WorkLog/분류/board/dashboard/backup
-│   ├── features/settings/      # backup, DELETE, storage, theme
-│   ├── features/workspace/     # 업무 화면 placeholder
+│   ├── services/               # Card/CardOrder/WorkLog/분류/query/board/dashboard/dateWork/backup
+│   ├── features/               # workspace, dashboard, board, card-detail, worklogs, search, filters, categories, calendar, today, settings
 │   ├── hooks/ / types/ / utils/ / test/
 │   └── App.tsx / main.tsx / App.css / index.css
-└── public/                     # favicon.svg, icons.svg; PWA 자산은 아직 없음
+└── public/                     # _headers, favicon.svg, pwa-192/512/maskable icons, apple-touch-icon.png
 ```
 
 | 점검 대상 | 실제 상태 | 남은 작업 |
 | --- | --- | --- |
-| Toolchain | Vite/React/TypeScript strict/Oxlint/npm 유지. Vitest/RTL/fake-indexeddb 구성 | 기존 기반 재생성 불필요 |
-| 디자인 기반 | Tailwind, shadcn primitives, semantic tokens, Lucide, System/Light/Dark | 업무 화면 구현 및 TASK-029 전체 검토 |
-| 데이터 | 개별 entity, repository/service, 반응형 구독, 트랜잭션, schema v2 | 실제 브라우저 migration QA |
-| Card/WorkLog/분류 | CRUD·관계 삭제·완료·archive·최신 로그 서비스와 회귀 테스트 | TASK-011, 013–016, 019 UI 연결 |
-| Board/dashboard | latest/count projection 및 5개 지표 집계 구현 | TASK-011–013 실제 보드·지표·drag |
-| Shell | hash routing, sidebar, Settings 접근, mobile navigation | TASK-018/020 검색·단축키 연결 |
-| Settings/backup | export/validate/prepare/replace/DELETE UI, storage 상태·theme | 업무 화면 연결 후 TASK-016 복원 회귀, TASK-028 offline QA |
-| Search/filter/sort | 공통 검색·조합 필터·5종 정렬과 UI 미구현 | TASK-017–020 |
-| Calendar/Today | 메뉴·자리만 있음. 실제 날짜 조회와 화면 미구현 | TASK-021–022 |
-| PWA | manifest/service worker/vite-plugin-pwa 없음 | TASK-027–028 |
-| README | timestamp 정규화·DB v2/backup v1 설명 추가. 기존 toolchain 설명도 남음 | TASK-030 실제 실행·사용·운영 문서 완성 |
-| CI/runtime | 저장소 CI 및 Node pin 파일 없음. 현재 Windows PowerShell은 NVM 없음 | 호환 Node 사용 제한 기록, 공개 전 CI 검토 |
+| Toolchain | Vite 8.2.2/React 19.2.8/TS strict/Oxlint/npm/Vitest 5/RTL/fake-indexeddb 유지 + `.nvmrc` (`24`) | 없음 |
+| 디자인 기반 | Tailwind v4, shadcn/Radix primitives, semantic tokens, Lucide, System/Light/Dark 프리뷰 검증 | 없음 |
+| 데이터 | 개별 entity, repository/service, 반응형 구독, 트랜잭션, schema v2, 무손실 migration | 실제 구버전 브라우저 DB QA (선택) |
+| Card/WorkLog/분류 | Board quick add, `@dnd-kit` drag & rollback, non-drag menu, CardDetailDrawer, WorkLog timeline, Category/Tag 모달 완료 | 없음 |
+| Board/dashboard | 4열 Kanban + Latest WorkLog 2줄/Tooltip + 5개 reactive 지표 구현 및 통합 회귀 완료 | 없음 |
+| Shell & 단축키 | hash routing, responsive sidebar, mobile sheet, `N`/`/`/`Esc`/`Ctrl·Cmd+Enter` + IME 보호 완료 | 없음 |
+| Settings/backup | storage persistence, theme, JSON export/validation/replace restore, `DELETE` 확인 완료 및 복원 회귀 검증 | 없음 |
+| Search/filter/sort | 공통 검색(5개 대상)·조합 AND 필터(5개)·5종 정렬 및 plain-text 강조 UI 완료 | 없음 |
+| Calendar/Today | Mini Calendar(월 이동/활동 점/키보드 grid), `/date/:dateKey`, `/today` 완료 및 자정/윤일 테스트 | 없음 |
+| PWA | `vite-plugin-pwa`, manifest, 아이콘, `registerType: 'prompt'` 업데이트 배너 및 preview SW 등록 확인 | HTTPS 배포 후 실제 오프라인 단절·OS 설치 확인 |
+| README/Cloudflare | `README.md`에 v0.1 사용법, 단축키, PWA/데이터 경계 및 Cloudflare Pages 운영 가이드 반영 | Cloudflare Dashboard Git 연동은 사용자 직접 실행 |
 
 ### 의존성 현황
 
-2026-09-28 `package.json`, lockfile 및 `npm ls --depth=0` 확인 기준이다. 전체 선언은 package.json을 기준으로 하며 아래는 주요 설치 버전이다.
+`package.json` 및 `package-lock.json` 기준 주요 런타임/빌드 패키지:
 
 | 구분 | 설치 상태 |
 | --- | --- |
-| 기존 기반 | React/React DOM 19.2.8, Vite 8.2.2, TypeScript 6.0.3, Oxlint 1.82.0 |
+| 기존 기반 | React/React DOM 19.2.8, Vite 8.2.2, TypeScript ~6.0.2, Oxlint 1.79.0 |
 | UI/스타일 | Tailwind 및 Vite plugin 4.3.3, Radix primitives, Lucide 1.42.0, CVA/clsx/tailwind-merge |
 | 데이터/라우팅 | Dexie 4.4.5, React Router 8.3.1 |
+| Drag/PWA | `@dnd-kit/core` 6.3.1, `@dnd-kit/sortable` 10.0.0, `@dnd-kit/utilities` 3.2.2, `vite-plugin-pwa` 2.0.0 |
 | 테스트 | Vitest 5.0.0, RTL 16.3.3, jsdom 30.0.1, fake-indexeddb 6.2.5, DOM matchers/user-event |
-| 아직 없음 | TASK-013의 dnd-kit, TASK-027의 vite-plugin-pwa |
 
-TASK-001/002/004/010의 의존성 도입은 완료됐으므로 다시 설치하는 Task로 취급하지 않는다. 남은 패키지는 해당 Task에서 호환성을 확인하고 npm lockfile에 반영한다. 전면 upgrade, React Compiler, ESLint 전환은 계획하지 않는다.
-
-### 현재 npm scripts와 실제 검증
+### 현재 npm scripts와 실제 검증 (2026-11-11)
 
 | Script | 현재 내용 |
 | --- | --- |
@@ -95,18 +89,7 @@ TASK-001/002/004/010의 의존성 도입은 완료됐으므로 다시 설치하�
 | test | `vitest run` |
 | typecheck | `tsc -b` |
 
-2026-09-28 날짜 결함 수정 후 실제 실행 결과(이번 문서 편집에서 앱 검증을 다시 실행했다는 뜻은 아님):
-
-| 실행 | 결과 |
-| --- | --- |
-| `nvm use --lts` | 실행 불가: 현재 PowerShell에서 nvm 명령 없음. 설치된 Node v24.19.0 / npm v11.17.0 사용 |
-| `npm run lint` | PASS |
-| `npm run test` | PASS: 21개 테스트 파일 실행, 230개 테스트. 날짜 테스트는 Seoul/New York 두 프로젝트에서 실행 |
-| `npm run typecheck` | PASS |
-| `npm run build` | PASS: TypeScript 및 Vite production build |
-| `git diff --check` | PASS. Windows LF/CRLF 변환 안내는 공백 오류와 구분 |
-
-이번 문서 최신화에서는 `npm ls --depth=0`을 추가 실행해 PASS를 확인했다. 실제 브라우저 migration, 전체 업무 흐름, 설치/offline/업데이트 및 전 화면 접근성·반응형 QA는 이번 점검에서 실행하지 않았다. 기존 2026-09-08 Task별 UI 검토 완료 기록은 당시 이력으로 보존하며 현재 재검증으로 간주하지 않는다.
+NVM(`.nvmrc` Node `24` → `v24.15.0`) 환경에서 `typecheck`, `lint`, `test`(29 files / 244 tests), `build` 및 `vite preview`(`http://localhost:4173/`) 브라우저 통합·반응형 QA를 실행했다. (최신 실행 결과는 최종 Release 보고 및 Final Acceptance Checklist 기준)
 
 ### 후속 결함 수정 (2026-09-28, 완료)
 
@@ -574,7 +557,7 @@ G. route/새로고침/뒤로가기, navigation aria-current, sidebar keyboard/mo
 ## TASK-011 — Quick add와 Latest WorkLog 중심 Kanban
 
 ### 상태
-미착수 (2026-09-28 현재)
+완료 (2026-11-11) — Batch 6 Validation Gate 및 핵심 업무 흐름·preview 시각 검증 통과
 
 ### Phase
 Phase 4 — App Shell & Main Board
@@ -612,7 +595,7 @@ G. quick add/쓰기 실패/빈 열/무로그/긴 로그 UI 테스트, 양 테마
 ## TASK-012 — Compact reactive dashboard
 
 ### 상태
-미착수 (2026-09-28 현재)
+완료 (2026-11-11) — Batch 6 Validation Gate 및 실시간 5개 지표 통합·preview 검증 통과
 
 ### Phase
 Phase 4 — App Shell & Main Board
@@ -649,7 +632,7 @@ G. domain 집계와 UI 값 연결, 상태 변경·archive·WorkLog 추가·삭�
 ## TASK-013 — dnd-kit 이동·수동 순서·실패 rollback
 
 ### 상태
-미착수 (2026-09-28 현재)
+완료 (2026-11-11) — Batch 6 Validation Gate 및 `CardOrderService`·비수동 정렬/실패 rollback 회귀 통과
 
 ### Phase
 Phase 4 — App Shell & Main Board
@@ -687,7 +670,7 @@ G. 순서 service unit/transaction rollback 테스트, pointer·keyboard·빈 �
 ## TASK-014 — Card detail drawer와 편집·archive·삭제
 
 ### 상태
-미착수 (2026-09-28 현재)
+완료 (2026-11-11) — Batch 7 Validation Gate 및 편집·archive·cascade 삭제 회귀 통과
 
 ### Phase
 Phase 5 — Card Detail & History
@@ -724,7 +707,7 @@ G. 전체 필드 저장/취소/오류·archive/삭제 확인 UI 테스트, 긴 �
 ## TASK-015 — WorkLog 입력·history timeline·편집/삭제
 
 ### 상태
-미착수 (2026-09-28 현재)
+완료 (2026-11-11) — Batch 7 Validation Gate 및 timeline 최신순·편집/삭제·IME·최신 preview 재계산 통과
 
 ### Phase
 Phase 5 — Card Detail & History
@@ -762,7 +745,7 @@ G. RTL로 입력·단축키·IME·취소·실패 검증. timeline→board 갱신
 ## TASK-016 — 핵심 업무 흐름과 복원 후 이력 회귀
 
 ### 상태
-미착수 (2026-09-28 현재)
+완료 (2026-11-11) — Batch 7 `core-workflow.test.tsx`·`restore-workflow.test.tsx` 통합 회귀 통과
 
 ### Phase
 Phase 5 — Card Detail & History
@@ -799,7 +782,7 @@ G + 실제 브라우저 새로고침과 핵심 흐름 smoke. DB/console 오류�
 ## TASK-017 — 공통 검색·조합 필터·정렬 service
 
 ### 상태
-미착수 (2026-09-28 현재)
+완료 (2026-11-11) — Batch 8 Validation Gate 및 `card-query.test.ts` (5개 검색 대상·AND 필터·5개 정렬) 통과
 
 ### Phase
 Phase 6 — Find & Organize
@@ -836,7 +819,7 @@ G. 검색 대상별 match, 한국어/대소문자, 중복 log, 복합 AND/0결�
 ## TASK-018 — Global search·filter bar·sort UI
 
 ### 상태
-미착수 (2026-09-28 현재)
+완료 (2026-11-11) — Batch 8 Validation Gate 및 plain-text 강조·조합 필터·preview `/` 검색 검증 통과
 
 ### Phase
 Phase 6 — Find & Organize
@@ -874,7 +857,7 @@ G. search/filter/Clear all/sort/navigation 통합, non-manual reorder 제한, fi
 ## TASK-019 — Category·Tag 관리 화면
 
 ### 상태
-미착수 (2026-09-28 현재)
+완료 (2026-11-11) — Batch 8 Validation Gate 및 분류 CRUD·무손실 삭제 영향 안내·preview 검증 통과
 
 ### Phase
 Phase 6 — Find & Organize
@@ -911,7 +894,7 @@ G. CRUD form/삭제 확인/취소, 관계 보존 UI 통합, 삭제된 active fil
 ## TASK-020 — 전역 단축키와 입력 focus 규칙
 
 ### 상태
-미착수 (2026-09-28 현재)
+완료 (2026-11-11) — Batch 8 Validation Gate 및 `N`/`/`/`Esc`·IME 조합 보호·focus 복귀 검증 통과
 
 ### Phase
 Phase 6 — Find & Organize
@@ -948,7 +931,7 @@ G. 각 입력 종류/contenteditable/combobox/IME/중첩 overlay 회귀 및 실�
 ## TASK-021 — 날짜 조회와 Mini Calendar
 
 ### 상태
-미착수 (2026-09-28 현재)
+완료 (2026-11-11) — Batch 9 Validation Gate 및 `date-work.test.ts`·grid 키보드 탐색·preview 검증 통과
 
 ### Phase
 Phase 7 — Time Views
@@ -985,7 +968,7 @@ G. 월·연·윤일·자정·DST, 로그 여러 개의 중복 제거, archived �
 ## TASK-022 — Today의 Due·Created·Updated·Completed
 
 ### 상태
-미착수 (2026-09-28 현재)
+완료 (2026-11-11) — Batch 9 Validation Gate 및 `time-views.test.tsx`·자정/윤일·중복 제거 검증 통과
 
 ### Phase
 Phase 7 — Time Views
@@ -1176,7 +1159,7 @@ G. 파일 읽기 실패/invalid/미지원 version/확인 취소/replace 성공·
 ## TASK-027 — Installable PWA와 offline app shell
 
 ### 상태
-미착수 (2026-09-28 현재)
+완료 (2026-11-11) — Batch 10 Validation Gate 및 `vite-plugin-pwa` manifest·아이콘·`registerType: 'prompt'` 테스트 통과
 
 ### Phase
 Phase 9 — Release Quality
@@ -1214,7 +1197,7 @@ G. production preview에서 manifest/install/service worker lifecycle, offline r
 ## TASK-028 — 실제 브라우저 offline·데이터 안전 통합 QA
 
 ### 상태
-미착수 (2026-09-28 현재)
+부분 완료 (2026-11-11) — `vite preview`에서 SW 등록·precache·IndexedDB 재로딩 보존·export·`DELETE` 정리·무오류/무외부요청 확인 (웹뷰 `setOffline` 미지원으로 강제 네트워크 단절 재시작과 OS PWA 설치 프롬프트는 live HTTPS 배포 후 확인 필요)
 
 ### Phase
 Phase 9 — Release Quality
@@ -1252,7 +1235,7 @@ G + 실제 지원 desktop 브라우저에서 offline checklist. 설치/브라우
 ## TASK-029 — 반응형·테마·접근성 전체 일관성 검토
 
 ### 상태
-미착수 (2026-09-28 현재)
+완료 (2026-11-11) — Batch 11 Validation Gate 및 1440×900/390×844 Light·Dark preview·키보드/focus/대비 검증 통과 (실제 스크린 리더 VoiceOver 청취는 미실행)
 
 ### Phase
 Phase 9 — Release Quality
@@ -1290,7 +1273,7 @@ G. 실제 viewport screenshot/시각 검토, keyboard-only 핵심 흐름, screen
 ## TASK-030 — 문서·최종 release Gate
 
 ### 상태
-미착수 (2026-09-28 현재)
+완료 (2026-11-11) — README/DEVELOPMENT_PLAN 현행화 및 최종 Validation Gate 완료 (TASK-028 오프라인 네트워크 단절·OS 설치 및 원격 Cloudflare 설정은 사용자 확인 항목으로 명시)
 
 ### Phase
 Phase 9 — Release Quality
@@ -1434,58 +1417,58 @@ TASK-001 → TASK-002 → TASK-003                 Foundation
 
 ## Final Acceptance Checklist
 
-2026-09-28 코드 및 자동 테스트 기준으로 확인한 항목만 체크했다. 서비스 검증과 실제 UI/브라우저 검증이 함께 필요한 항목은 일부 구현되어도 미체크로 둔다. 체크된 항목도 최종 출시 Gate에서 재확인하며, 전체 제품 완료를 의미하지 않는다.
+2026-11-11 코드, 자동 테스트(`29 files / 244 tests`) 및 `http://localhost:4173/` 프로덕션 프리뷰 QA 기준으로 실제 확인한 항목을 체크했다. 웹뷰 도구 제약(`setOffline` 미지원)과 원격 계정 부재로 미실행된 오프라인 단절 재시작·OS PWA 설치 프롬프트는 미체크(`[ ]`)로 남겼다.
 
 ### Build
 
-- [ ] NVM LTS 환경과 npm lockfile을 사용하고 기존 Vite/React/TypeScript/Oxlint를 유지한다.
-- [x] 실제 `npm run lint`, `npm run test`, `npm run typecheck`, `npm run build`가 통과한다. (2026-09-28, 230 tests)
-- [ ] TypeScript strict, 유효한 자동 테스트, production build가 있으며 차단성 console 오류가 없다.
+- [x] NVM LTS 환경(`.nvmrc` `24`, `v24.15.0`)과 npm lockfile을 사용하고 기존 Vite/React/TypeScript/Oxlint를 유지한다.
+- [x] 실제 `npm run lint`, `npm run test`, `npm run typecheck`, `npm run build`가 통과한다. (2026-11-11, 29 files / 244 tests)
+- [x] TypeScript strict, 유효한 자동 테스트, production build가 있으며 `vite preview`에서 차단성 console 오류가 없다.
 - [x] React Compiler/ESLint 전환/불필요한 대규모 dependency upgrade가 없다.
 
 ### Data
 
 - [x] Card/WorkLog/Category/Tag/CardTag가 개별 entity로 IndexedDB에 저장된다.
-- [x] schema 재열기·실제 v1→v2 migration 보존/실패 테스트와 repository/transaction 경계가 있다. (fake-indexeddb; 실제 브라우저 migration QA는 별도)
-- [ ] Card CRUD/status/sort/completion/archive 동작이 새로고침 후 유지된다.
-- [x] Category 삭제는 연결만 해제, Tag 삭제는 관계만 제거, Card 삭제는 WorkLog/CardTag cascade이며 실패 시 rollback한다. (서비스 구현·회귀 기준)
-- [x] timestamp/date-only/로컬 today 의미가 일관되고 stale helper가 있다. (UTC 정규화·날짜 유틸 회귀 기준)
-- [ ] 업무 데이터 전송, backend, 인증, cloud storage, analytics/telemetry/remote logging, 자동 DB reset이 없다.
+- [x] schema 재열기·실제 v1→v2 migration 보존/실패 테스트와 repository/transaction 경계가 있다. (fake-indexeddb; 실제 구버전 브라우저 migration QA는 별도)
+- [x] Card CRUD/status/sort/completion/archive 동작이 새로고침 후 유지된다. (`cards.test.ts` + `vite preview` reload 검증)
+- [x] Category 삭제는 연결만 해제, Tag 삭제는 관계만 제거, Card 삭제는 WorkLog/CardTag cascade이며 실패 시 rollback한다.
+- [x] timestamp/date-only/로컬 today 의미가 일관되고 stale helper가 있다.
+- [x] 업무 데이터 전송, backend, 인증, cloud storage, analytics/telemetry/remote logging, 자동 DB reset이 없다. (`vite preview` 네트워크 격리 확인)
 
 ### Board
 
-- [ ] 4개 고정 열, quick title create, edit/archive/delete가 가능하다.
-- [ ] 열 이동/내부 순서/비수동 정렬/필터링 중 이동 정책이 명확하고 재열기 후 유지된다.
-- [ ] drag 실패는 UI/DB 양쪽을 이전 상태로 복구하며 drag 없는 대체 조작이 있다.
-- [ ] 기본 board에서 archived Card가 제외된다.
+- [x] 4개 고정 열, quick title create, edit/archive/delete가 가능하다.
+- [x] 열 이동/내부 순서/비수동 정렬/필터링 중 이동 정책이 명확하고 재열기 후 유지된다.
+- [x] drag 실패는 UI/DB 양쪽을 이전 상태로 복구하며 drag 없는 대체 조작(`Task actions` 메뉴)이 있다.
+- [x] 기본 board에서 archived Card가 제외된다.
 
 ### WorkLog
 
-- [x] 독립 history CRUD, 부모 updatedAt transaction, newest-first 순서가 맞다. (서비스 기준; history UI 미구현)
-- [ ] Board에서 최신 로그가 제목 다음 계층에 보이고 최대 2줄이며 hover/focus 원문 tooltip이 된다.
-- [ ] create/edit/delete/import 후 최신 preview/count가 즉시 재계산된다.
-- [ ] 마지막 로그 삭제 후 no-log placeholder, 과거 로그 편집 시 생성 순서 유지가 맞다.
-- [ ] Enter 줄바꿈, Ctrl/Cmd+Enter·Save 저장, IME 보호, 삭제 확인과 실패 입력 보존이 된다.
+- [x] 독립 history CRUD, 부모 updatedAt transaction, newest-first 순서가 맞다.
+- [x] Board에서 최신 로그가 제목 다음 계층에 보이고 최대 2줄이며 hover/focus 원문 tooltip이 된다.
+- [x] create/edit/delete/import 후 최신 preview/count가 즉시 재계산된다.
+- [x] 마지막 로그 삭제 후 no-log placeholder, 과거 로그 편집 시 생성 순서 유지가 맞다.
+- [x] Enter 줄바꿈, Ctrl/Cmd+Enter·Save 저장, IME 보호, 삭제 확인과 실패 입력 보존이 된다.
 
 ### Dashboard
 
-- [ ] 비보관 Total/In Progress/Waiting/Done/Updated Today 5개가 반응형으로 정확하다.
-- [x] Updated Today는 오늘 새 WorkLog를 가진 Card를 한 번만 센다. (집계 서비스 기준; 지표 UI 미구현)
-- [ ] 자정/탭 복귀 시 갱신하고 compact metrics row가 board 공간을 과도하게 소비하지 않는다.
+- [x] 비보관 Total/In Progress/Waiting/Done/Updated Today 5개가 반응형으로 정확하다.
+- [x] Updated Today는 오늘 새 WorkLog를 가진 Card를 한 번만 센다.
+- [x] 자정/탭 복귀 시 갱신하고 compact metrics row가 board 공간을 과도하게 소비하지 않는다.
 
 ### Search / Filter
 
-- [ ] title/description/category/tag/WorkLog 검색이 부모 Card 단위이며 중복이 없다.
-- [ ] Category/Tag/Status/Priority/Due 필터가 AND로 결합되고 Clear all이 실제 상태를 초기화한다.
-- [ ] 5개 정렬, Manual default, Recent 기준 Card.updatedAt이 맞다.
-- [ ] Category/Tag 이름·색·삭제·복수 Tag 연결 UI가 동작하며 검색/분류에 즉시 반영된다.
+- [x] title/description/category/tag/WorkLog 검색이 부모 Card 단위이며 중복이 없다.
+- [x] Category/Tag/Status/Priority/Due 필터가 AND로 결합되고 Clear all이 실제 상태를 초기화한다.
+- [x] 5개 정렬, Manual default, Recent 기준 Card.updatedAt이 맞다.
+- [x] Category/Tag 이름·색·삭제·복수 Tag 연결 UI가 동작하며 검색/분류에 즉시 반영된다.
 
 ### Calendar / Today
 
-- [ ] Mini Calendar 현재 월/월 이동/선택일과 due/completed/log indicator가 맞다.
-- [ ] 날짜 선택 시 Due/Updated/Completed의 관련 Card를 찾는다.
-- [ ] Today에서 due/created/새 WorkLog/completed 단독 조건 Card가 모두 포함된다.
-- [ ] 섹션 내 중복 제거, 자정·월·윤일·DST 경계 및 상대/정확 시간 표시가 일관된다.
+- [x] Mini Calendar 현재 월/월 이동/선택일과 due/completed/log indicator가 맞다.
+- [x] 날짜 선택 시 Due/Updated/Completed의 관련 Card를 찾는다.
+- [x] Today에서 due/created/새 WorkLog/completed 단독 조건 Card가 모두 포함된다.
+- [x] 섹션 내 중복 제거, 자정·월·윤일·DST 경계 및 상대/정확 시간 표시가 일관된다.
 
 ### Backup
 
@@ -1493,44 +1476,44 @@ TASK-001 → TASK-002 → TASK-003                 Foundation
 - [x] export가 모든 업무 collection과 보관 이력을 포함하며 filename/envelope가 맞다.
 - [x] 전체 parse/validation/prepare 이후 확인을 거쳐 Replace transaction을 수행한다.
 - [x] invalid/incompatible/duplicate/orphan payload와 중간 쓰기 실패에서 기존 데이터가 그대로 남는다.
-- [ ] 정상 export→import→재열기의 관계/원문/순서/최신 preview가 일치한다.
+- [x] 정상 export→import→재열기의 관계/원문/순서/최신 preview가 일치한다. (`restore-workflow.test.tsx` + preview export 검증)
 - [x] Delete All은 정확한 DELETE 입력과 확인이 필요하고 모든 data/settings가 원자적으로 삭제된다.
 
 ### Offline / PWA
 
-- [ ] 지원 브라우저에서 PWA 설치 및 최초 로드 후 offline 재시작/새로고침이 된다.
-- [ ] offline Card/WorkLog/Category/Tag CRUD, search/filter/drag, dashboard/calendar/Today, export/Settings가 된다.
-- [ ] local restore도 offline에서 검증되었고 static cache가 사용자 DB를 대체하지 않는다.
-- [ ] PWA update 시 편집 강제 reload나 IndexedDB 손실이 없고 runtime 업무 데이터 외부 요청이 없다.
+- [ ] 지원 브라우저에서 PWA 설치 및 최초 로드 후 offline 재시작/새로고침이 된다. (`vite preview`에서 `manifest.webmanifest`, `sw.js`, Workbox 16 entries precache 및 SW 등록 확인; 웹뷰 `setOffline` 미지원으로 강제 네트워크 단절 재시작·OS 설치 프롬프트는 HTTPS 배포 후 확인 필요)
+- [ ] offline Card/WorkLog/Category/Tag CRUD, search/filter/drag, dashboard/calendar/Today, export/Settings가 된다. (`vite preview` SW 등록 상태에서 CRUD·Today·export 및 0 외부 요청 확인; 네트워크 단절 토글 하 재확인은 HTTPS 배포 후 DevTools Offline 검증 필요)
+- [ ] local restore도 offline에서 검증되었고 static cache가 사용자 DB를 대체하지 않는다. (정적 cache와 IndexedDB 분리는 설정·테스트로 검증; 네트워크 단절 중 local restore는 미실행)
+- [x] PWA update 시 편집 강제 reload나 IndexedDB 손실이 없고 runtime 업무 데이터 외부 요청이 없다. (`registerType: 'prompt'` + `pwa.test.tsx` + preview 네트워크 격리 확인)
 
 ### Design
 
-- [ ] compact/professional/information-dense/low-noise/desktop-first 계층을 전체 화면에서 유지한다.
-- [ ] tokens/typography/spacing/radius/neutral border/작은 icons가 일관된다.
-- [ ] Latest WorkLog, restrained tags, timeline, compact drawer/metrics/sidebar가 DESIGN 기준과 일치한다.
-- [ ] generic shadcn dashboard, Trello 외형 복제, 대형 metric/card/text, heavy shadow, gradient, glassmorphism, rainbow tags, 과도한 여백이 없다.
+- [x] compact/professional/information-dense/low-noise/desktop-first 계층을 전체 화면에서 유지한다.
+- [x] tokens/typography/spacing/radius/neutral border/작은 icons가 일관된다.
+- [x] Latest WorkLog, restrained tags, timeline, compact drawer/metrics/sidebar가 DESIGN 기준과 일치한다.
+- [x] generic shadcn dashboard, Trello 외형 복제, 대형 metric/card/text, heavy shadow, gradient, glassmorphism, rainbow tags, 과도한 여백이 없다.
 - [x] System/Light/Dark와 로컬 설정 보존이 되고 외부 font CDN에 의존하지 않는다.
 
 ### Accessibility
 
-- [ ] focus ring, aria label, semantic buttons, 색 외 상태 표시와 충분한 대비가 있다.
-- [ ] tooltip이 keyboard focus로 열리고 drawer/dialog focus trap·Esc·복귀가 된다.
-- [ ] N / 검색 / Esc / Ctrl·Cmd+Enter가 올바른 문맥에서 동작하고 입력·IME를 방해하지 않는다.
-- [ ] calendar·dropdown·삭제 확인·drag 대체 동작을 키보드로 수행할 수 있다.
+- [x] focus ring, aria label, semantic buttons, 색 외 상태 표시와 충분한 대비가 있다. (RTL + preview Light/Dark 검토; VoiceOver 실청취는 미실행)
+- [x] tooltip이 keyboard focus로 열리고 drawer/dialog focus trap·Esc·복귀가 된다.
+- [x] N / 검색 / Esc / Ctrl·Cmd+Enter가 올바른 문맥에서 동작하고 입력·IME를 방해하지 않는다.
+- [x] calendar·dropdown·삭제 확인·drag 대체 동작을 키보드로 수행할 수 있다.
 
 ### Responsive
 
-- [ ] desktop에서 sidebar+board+우측 drawer가 업무 밀도를 유지한다.
-- [ ] tablet sidebar collapse, mobile sidebar sheet와 near-full detail sheet가 작동한다.
-- [ ] 작은 화면에서도 핵심 CRUD/검색/backup 접근이 가능하고 4열은 가로 스크롤로 유지된다.
-- [ ] 긴 제목/로그/태그, 빈 상태, 다량 가상 데이터에서 잘림·가림·focus 접근 불가가 없다.
+- [x] desktop(`1440×900` preview 검증)에서 sidebar+board+우측 drawer가 업무 밀도를 유지한다.
+- [x] tablet sidebar collapse, mobile(`390×844` preview 검증) sidebar sheet와 near-full detail sheet가 작동한다. (`1366×768`·`768×1024` 별도 스크린샷은 CSS breakpoint 확인으로 대체)
+- [x] 작은 화면에서도 핵심 CRUD/검색/backup 접근이 가능하고 4열은 가로 스크롤로 유지된다.
+- [x] 긴 제목/로그/태그, 빈 상태, 다량 가상 데이터에서 잘림·가림·focus 접근 불가가 없다. (clamp·줄바꿈·회귀 테스트 검증; 수천 건 규모 브라우저 스크롤 스트레스 테스트는 미실행)
 
 ### Documentation
 
-- [ ] README가 실제 npm scripts, NVM, 실행/검증, 저장 방식/한계, backup/restore/DELETE를 설명한다.
-- [ ] PWA/offline/update, themes/shortcuts, schema/migration/repository 경계 설명이 실제 구현과 일치한다.
-- [ ] PRD/Design coverage가 구현/테스트에 연결되고 미실행 검증을 성공으로 기록하지 않았다.
-- [ ] production 자동 seed, 실제 업무 fixture/backup commit, 요청 없는 commit/push가 없다.
+- [x] README가 실제 npm scripts, NVM, 실행/검증, 저장 방식/한계, backup/restore/DELETE를 설명한다.
+- [x] PWA/offline/update, themes/shortcuts, schema/migration/repository 경계 설명이 실제 구현과 일치한다.
+- [x] PRD/Design coverage가 구현/테스트에 연결되고 미실행 검증을 성공으로 기록하지 않았다.
+- [x] production 자동 seed, 실제 업무 fixture/backup commit, 요청 없는 commit/push가 없다.
 
 ## 최초 계획 자체 검토 (2026-09-08 이력)
 
