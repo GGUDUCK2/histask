@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
+import { useI18n } from '@/app/language-context'
 import { useTheme } from '@/app/theme-context'
 import { Button } from '@/components/ui/button'
 import {
@@ -26,6 +27,7 @@ export function DeleteAllDataDialog({
   writePending: boolean
 }) {
   const { resetLocalTheme } = useTheme()
+  const { messages, resetLocalLanguage } = useI18n()
   const [open, setOpen] = useState(false)
   const [confirmation, setConfirmation] = useState('')
   const [message, setMessage] = useState<string>()
@@ -48,11 +50,12 @@ export function DeleteAllDataDialog({
       const started = await runMutation(() => service.deleteAll())
       if (!started) return
       resetLocalTheme()
+      resetLocalLanguage()
       setOpen(false)
       setConfirmation('')
-      setMessage('All local Histask data was deleted.')
+      setMessage(messages.settings.deleteAllSuccess)
     } catch {
-      setError('Could not delete local data. Your previous data is unchanged.')
+      setError(messages.settings.deleteAllError)
     }
   }
 
@@ -60,10 +63,9 @@ export function DeleteAllDataDialog({
     <div className="settings-row items-start">
       <Trash2 className="mt-0.5 size-4 text-destructive" />
       <div className="min-w-0 flex-1">
-        <div className="font-medium">Delete all data</div>
+        <div className="font-medium">{messages.settings.deleteAllTitle}</div>
         <p className="text-metadata text-muted-foreground">
-          Permanently remove every local task, history entry, classification,
-          and setting.
+          {messages.settings.deleteAllDescription}
         </p>
         {message && (
           <p className="mt-1 text-metadata text-success" role="status">
@@ -79,24 +81,24 @@ export function DeleteAllDataDialog({
             disabled={writePending}
             className="text-destructive"
           >
-            Delete…
+            {messages.settings.deleteAllTrigger}
           </Button>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete all local data?</DialogTitle>
+            <DialogTitle>{messages.settings.deleteAllDialogTitle}</DialogTitle>
             <DialogDescription>
-              This permanently deletes every Card and WorkLog from this browser
-              profile. Export a backup first if you may need this data.
+              {messages.settings.deleteAllDialogDescription}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2">
             <Label htmlFor="delete-confirmation">
-              Type DELETE to confirm
+              {messages.settings.deleteAllConfirmLabel}
             </Label>
             <Input
               id="delete-confirmation"
               autoComplete="off"
+              placeholder={messages.settings.deleteAllConfirmPlaceholder}
               value={confirmation}
               disabled={writePending}
               onChange={(event) => setConfirmation(event.target.value)}
@@ -113,14 +115,16 @@ export function DeleteAllDataDialog({
               disabled={writePending}
               onClick={() => changeOpen(false)}
             >
-              Cancel
+              {messages.common.cancel}
             </Button>
             <Button
               variant="destructive"
               disabled={confirmation !== 'DELETE' || writePending}
               onClick={() => void deleteAll()}
             >
-              {writePending ? 'Deleting…' : 'Delete all data'}
+              {writePending
+                ? messages.common.deleting
+                : messages.settings.deleteAllConfirmButton}
             </Button>
           </DialogFooter>
         </DialogContent>

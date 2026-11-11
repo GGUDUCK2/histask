@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import { ThemeContext, type Theme } from './theme-context'
-import type { SettingsRepository } from '@/repositories/settings'
+import type { ThemePreferenceRepository } from '@/repositories/settings'
 
 const query = '(prefers-color-scheme: dark)'
 function subscribe(onChange: () => void) {
@@ -26,7 +26,7 @@ export function ThemeProvider({
 }: {
   children: ReactNode
   defaultTheme?: Theme
-  repository?: SettingsRepository
+  repository?: ThemePreferenceRepository
 }) {
   const [theme, setTheme] = useState<Theme>(defaultTheme)
   const [preferenceLoading, setPreferenceLoading] = useState(

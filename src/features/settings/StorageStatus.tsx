@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Database, ShieldCheck } from 'lucide-react'
+import { useI18n } from '@/app/language-context'
 import { Button } from '@/components/ui/button'
 import {
   StoragePersistenceService,
@@ -8,21 +9,12 @@ import {
 
 type ViewStatus = StoragePersistenceStatus | 'checking' | 'requesting'
 
-const statusCopy: Record<ViewStatus, string> = {
-  checking: 'Checking browser storage status…',
-  requesting: 'Requesting persistent local storage…',
-  persisted: 'This browser reports that Histask storage is persistent.',
-  'not-persisted': 'Data is local, but the browser may reclaim its storage.',
-  denied: 'The browser did not grant persistent storage.',
-  unsupported: 'This browser does not report persistent storage status.',
-  error: 'Could not read the browser storage status.',
-}
-
 export function StorageStatus({
   service,
 }: {
   service?: StoragePersistenceService
 }) {
+  const { messages } = useI18n()
   const persistence = useMemo(
     () => service ?? new StoragePersistenceService(),
     [service],
@@ -57,13 +49,12 @@ export function StorageStatus({
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="font-medium">Browser storage</div>
+        <div className="font-medium">{messages.settings.storageTitle}</div>
         <p className="mt-0.5 text-metadata text-muted-foreground" role="status">
-          {statusCopy[status]}
+          {messages.settings.storageStatuses[status]}
         </p>
         <p className="mt-1 text-metadata text-muted-foreground">
-          Data stays in this browser profile and origin. Persistence does not
-          guarantee permanent retention.
+          {messages.settings.storageRetentionNote}
         </p>
       </div>
       {canRequest && (
@@ -72,7 +63,7 @@ export function StorageStatus({
           size="sm"
           onClick={() => void requestPersistence()}
         >
-          Request persistence
+          {messages.settings.storageRequestButton}
         </Button>
       )}
     </div>

@@ -7,12 +7,11 @@ import {
 } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router'
+import { useI18n } from '@/app/language-context'
 import { useWorkspace } from '@/features/workspace/workspace-context'
 import { computeMonthActivityIndicators } from '@/services/date-work'
 import { cn } from '@/utils/cn'
 import { isDateOnly, parseLocalDate, toLocalDateKey } from '@/utils/dates'
-
-const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const
 
 interface CalendarCell {
   date: Date
@@ -49,6 +48,7 @@ function buildMonthGrid(year: number, monthIndex: number): CalendarCell[][] {
 }
 
 export function MiniCalendar({ onNavigate }: { onNavigate?: () => void }) {
+  const { intlLocale, messages } = useI18n()
   const { snapshot } = useWorkspace()
   const navigate = useNavigate()
   const location = useLocation()
@@ -121,11 +121,11 @@ export function MiniCalendar({ onNavigate }: { onNavigate?: () => void }) {
 
   const monthTitle = useMemo(
     () =>
-      new Intl.DateTimeFormat(undefined, {
+      new Intl.DateTimeFormat(intlLocale, {
         month: 'long',
         year: 'numeric',
       }).format(new Date(viewMonth.year, viewMonth.month, 1)),
-    [viewMonth.month, viewMonth.year],
+    [intlLocale, viewMonth.month, viewMonth.year],
   )
 
   function shiftMonth(delta: number) {
@@ -187,7 +187,7 @@ export function MiniCalendar({ onNavigate }: { onNavigate?: () => void }) {
         <div className="flex items-center gap-0.5">
           <button
             type="button"
-            aria-label="Previous month"
+            aria-label={messages.calendar.previousMonth}
             onClick={() => shiftMonth(-1)}
             className="inline-flex size-6 items-center justify-center rounded-control text-muted-foreground hover:bg-surface-hover hover:text-foreground"
           >
@@ -195,7 +195,7 @@ export function MiniCalendar({ onNavigate }: { onNavigate?: () => void }) {
           </button>
           <button
             type="button"
-            aria-label="Next month"
+            aria-label={messages.calendar.nextMonth}
             onClick={() => shiftMonth(1)}
             className="inline-flex size-6 items-center justify-center rounded-control text-muted-foreground hover:bg-surface-hover hover:text-foreground"
           >
@@ -210,9 +210,9 @@ export function MiniCalendar({ onNavigate }: { onNavigate?: () => void }) {
         className="grid gap-0.5 rounded-card border bg-surface p-1.5"
       >
         <div role="row" className="grid grid-cols-7 text-center">
-          {WEEKDAYS.map((weekday) => (
+          {messages.calendar.weekdays.map((weekday, index) => (
             <div
-              key={weekday}
+              key={index}
               role="columnheader"
               className="py-0.5 text-[11px] font-medium text-muted-foreground"
             >
@@ -229,13 +229,19 @@ export function MiniCalendar({ onNavigate }: { onNavigate?: () => void }) {
               const isSelected = cell.dateKey === selectedDateKey
               const isRovingTarget = cell.dateKey === activeRovingKey
 
-              const fullDateLabel = new Intl.DateTimeFormat(undefined, {
+              const fullDateLabel = new Intl.DateTimeFormat(intlLocale, {
                 dateStyle: 'long',
               }).format(cell.date)
               const activityParts: string[] = []
-              if (indicator?.hasDue) activityParts.push('due tasks')
-              if (indicator?.hasWorkLog) activityParts.push('WorkLogs')
-              if (indicator?.hasCompleted) activityParts.push('completed tasks')
+              if (indicator?.hasDue) {
+                activityParts.push(messages.calendar.indicatorDue)
+              }
+              if (indicator?.hasWorkLog) {
+                activityParts.push(messages.calendar.indicatorWorkLog)
+              }
+              if (indicator?.hasCompleted) {
+                activityParts.push(messages.calendar.indicatorCompleted)
+              }
 
               const cellAriaLabel =
                 activityParts.length > 0

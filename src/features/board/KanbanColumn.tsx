@@ -1,9 +1,10 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus } from 'lucide-react'
+import { useI18n } from '@/app/language-context'
 import { Button } from '@/components/ui/button'
 import type { BoardCardProjection } from '@/services/board-query'
-import { CARD_STATUS_LABELS, type CardStatus } from '@/types/domain'
+import type { CardStatus } from '@/types/domain'
 import { CARD_STATUS_VISUAL } from '@/utils/classification-styles'
 import { cn } from '@/utils/cn'
 import { InlineQuickAdd } from './QuickAddCard'
@@ -29,17 +30,18 @@ export function KanbanColumn({
   dndDisabled?: boolean
   className?: string
 }) {
+  const { messages } = useI18n()
   const { setNodeRef, isOver } = useDroppable({
     id: columnDroppableId(status),
     disabled: dndDisabled,
     data: { status },
   })
-  const label = CARD_STATUS_LABELS[status]
+  const label = messages.statuses[status]
   const visual = CARD_STATUS_VISUAL[status]
 
   return (
     <section
-      aria-label={`${label} (${cards.length})`}
+      aria-label={messages.board.columnAria(label, cards.length)}
       className={cn(
         'flex min-h-[260px] flex-col rounded-card border bg-surface-subtle/70',
         isOver && 'border-[var(--accent)]/60 bg-[var(--accent-soft)]/30',
@@ -64,7 +66,7 @@ export function KanbanColumn({
           type="button"
           variant="ghost"
           size="icon"
-          aria-label={`Add task to ${label}`}
+          aria-label={messages.board.addTaskToColumn(label)}
           className="size-7 text-muted-foreground hover:text-foreground"
           onClick={() => onToggleQuickAdd(!quickAddOpen)}
         >
@@ -90,7 +92,7 @@ export function KanbanColumn({
         >
           {cards.length === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center rounded-card border border-dashed border-border px-3 py-6 text-center text-metadata text-muted-foreground">
-              <span>No {label.toLowerCase()} tasks</span>
+              <span>{messages.board.emptyColumn(label)}</span>
             </div>
           ) : (
             cards.map((projection, index) => (

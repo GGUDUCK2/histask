@@ -9,6 +9,7 @@ import {
   MessageSquareText,
   MoreHorizontal,
 } from 'lucide-react'
+import { useI18n } from '@/app/language-context'
 import { Button } from '@/components/ui/button'
 import {
   Popover,
@@ -24,8 +25,6 @@ import { useWorkspace } from '@/features/workspace/workspace-context'
 import type { BoardCardProjection } from '@/services/board-query'
 import {
   CARD_STATUSES,
-  CARD_STATUS_LABELS,
-  PRIORITY_LABELS,
   type CardStatus,
 } from '@/types/domain'
 import {
@@ -64,14 +63,19 @@ export function TaskCardContent({
   dragHandleAttributes,
   dragHandleListeners,
 }: TaskCardContentProps) {
+  const { intlLocale, messages } = useI18n()
   const { openCard, sortMode } = useWorkspace()
   const [menuOpen, setMenuOpen] = useState(false)
   const { card, category, tags, latestWorkLog, workLogCount } = projection
 
   const dueUrgency = getDueUrgency(card)
   const activityTimestamp = latestWorkLog?.createdAt ?? card.updatedAt
-  const relativeActivity = formatRelativeTime(activityTimestamp)
-  const exactActivity = formatExactTime(activityTimestamp)
+  const relativeActivity = formatRelativeTime(
+    activityTimestamp,
+    undefined,
+    intlLocale,
+  )
+  const exactActivity = formatExactTime(activityTimestamp, intlLocale)
   const visibleTags = tags.slice(0, 3)
   const extraTagCount = Math.max(0, tags.length - 3)
   const latestWasEdited =
@@ -120,7 +124,7 @@ export function TaskCardContent({
             {dragHandleAttributes && dragHandleListeners && (
               <button
                 type="button"
-                aria-label={`Drag ${card.title}`}
+                aria-label={messages.board.dragCardAria(card.title)}
                 data-card-interactive="true"
                 className="inline-flex size-6 cursor-grab items-center justify-center rounded-control text-muted-foreground opacity-65 hover:bg-surface-hover hover:text-foreground focus-visible:opacity-100 active:cursor-grabbing group-hover:opacity-100"
                 {...dragHandleAttributes}
@@ -137,7 +141,7 @@ export function TaskCardContent({
                   variant="ghost"
                   size="icon"
                   data-card-interactive="true"
-                  aria-label={`Task actions for ${card.title}`}
+                  aria-label={messages.board.taskActionsAria(card.title)}
                   className="size-6 text-muted-foreground"
                 >
                   <MoreHorizontal className="size-3.5" />
@@ -153,14 +157,14 @@ export function TaskCardContent({
                     }}
                     className="flex h-7 items-center rounded-control px-2 text-left hover:bg-surface-hover"
                   >
-                    Open details
+                    {messages.board.openDetails}
                   </button>
 
                   {onMoveStatus && (
                     <>
                       <div className="my-1 border-t" />
                       <div className="px-2 py-0.5 text-metadata font-medium text-muted-foreground">
-                        Move to status
+                        {messages.board.moveToStatus}
                       </div>
                       {CARD_STATUSES.filter((status) => status !== card.status).map(
                         (status) => (
@@ -173,7 +177,7 @@ export function TaskCardContent({
                             }}
                             className="flex h-7 items-center rounded-control px-2 text-left hover:bg-surface-hover"
                           >
-                            {CARD_STATUS_LABELS[status]}
+                            {messages.statuses[status]}
                           </button>
                         ),
                       )}
@@ -184,7 +188,7 @@ export function TaskCardContent({
                     <>
                       <div className="my-1 border-t" />
                       <div className="px-2 py-0.5 text-metadata font-medium text-muted-foreground">
-                        Reorder
+                        {messages.board.reorder}
                       </div>
                       {canMoveUp && (
                         <button
@@ -196,7 +200,7 @@ export function TaskCardContent({
                           className="flex h-7 items-center gap-1.5 rounded-control px-2 text-left hover:bg-surface-hover"
                         >
                           <ArrowUp className="size-3.5 text-muted-foreground" />
-                          Move up
+                          {messages.board.moveUp}
                         </button>
                       )}
                       {canMoveDown && (
@@ -209,7 +213,7 @@ export function TaskCardContent({
                           className="flex h-7 items-center gap-1.5 rounded-control px-2 text-left hover:bg-surface-hover"
                         >
                           <ArrowDown className="size-3.5 text-muted-foreground" />
-                          Move down
+                          {messages.board.moveDown}
                         </button>
                       )}
                     </>
@@ -228,7 +232,7 @@ export function TaskCardContent({
               type="button"
               disabled={isOverlay}
               onClick={(event) => openCard(card.id, event.currentTarget)}
-              aria-label={`Latest progress log: ${latestWorkLog.content}`}
+              aria-label={messages.board.latestLogAria(latestWorkLog.content)}
               className="w-full rounded-r-control border-l-2 border-[var(--accent)]/45 bg-surface-subtle/80 px-2.5 py-1.5 text-left transition-colors hover:bg-surface-subtle"
             >
               <span className="text-ui text-foreground/90 whitespace-pre-line break-words [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden">
@@ -239,8 +243,8 @@ export function TaskCardContent({
           <TooltipContent side="bottom" align="start" className="max-w-sm">
             <div className="grid gap-1">
               <div className="flex items-center gap-1.5 text-metadata text-muted-foreground">
-                <span>{formatExactTime(latestWorkLog.createdAt)}</span>
-                {latestWasEdited && <span>(edited)</span>}
+                <span>{formatExactTime(latestWorkLog.createdAt, intlLocale)}</span>
+                {latestWasEdited && <span>{messages.common.edited}</span>}
               </div>
               <p className="whitespace-pre-wrap break-words text-ui text-popover-foreground">
                 {latestWorkLog.content}
@@ -250,7 +254,7 @@ export function TaskCardContent({
         </Tooltip>
       ) : (
         <p className="rounded-r-control border-l-2 border-border bg-surface-subtle/50 px-2.5 py-1 text-metadata text-muted-foreground">
-          No progress log yet
+          {messages.board.noProgressLog}
         </p>
       )}
 
@@ -276,7 +280,7 @@ export function TaskCardContent({
                 PRIORITY_VISUAL[card.priority].badgeClass,
               )}
             >
-              {PRIORITY_LABELS[card.priority]}
+              {messages.priorities[card.priority]}
             </span>
           )}
 
@@ -288,9 +292,13 @@ export function TaskCardContent({
               )}
             >
               <Calendar className="size-3 shrink-0" />
-              <span>{formatDueDate(card.dueDate)}</span>
-              {dueUrgency === 'overdue' && <span>(Overdue)</span>}
-              {dueUrgency === 'today' && <span>(Today)</span>}
+              <span>{formatDueDate(card.dueDate, intlLocale)}</span>
+              {dueUrgency === 'overdue' && (
+                <span>{messages.board.dueOverdueTag}</span>
+              )}
+              {dueUrgency === 'today' && (
+                <span>{messages.board.dueTodayTag}</span>
+              )}
             </span>
           )}
         </div>

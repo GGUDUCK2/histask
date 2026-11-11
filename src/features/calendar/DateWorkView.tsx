@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router'
+import { useI18n } from '@/app/language-context'
 import { Button } from '@/components/ui/button'
 import { useWorkspace } from '@/features/workspace/workspace-context'
 import type { BoardCardProjection } from '@/services/board-query'
@@ -8,7 +9,6 @@ import {
   computeDateWorkSummary,
   type DateWorkUpdatedItem,
 } from '@/services/date-work'
-import { CARD_STATUS_LABELS } from '@/types/domain'
 import { CARD_STATUS_VISUAL, getClassificationMeta } from '@/utils/classification-styles'
 import { cn } from '@/utils/cn'
 import {
@@ -35,6 +35,7 @@ function CompactTaskSummaryRow({
   subtitle?: string
   timestamp?: string
 }) {
+  const { intlLocale, messages } = useI18n()
   const { openCard } = useWorkspace()
   const { card, category, latestWorkLog } = projection
   const displaySubtitle = subtitle ?? latestWorkLog?.content
@@ -67,7 +68,7 @@ function CompactTaskSummaryRow({
               statusVisual.badgeClass,
             )}
           >
-            {CARD_STATUS_LABELS[card.status]}
+            {messages.statuses[card.status]}
           </span>
         </div>
       </div>
@@ -77,15 +78,18 @@ function CompactTaskSummaryRow({
           {displaySubtitle}
         </p>
       ) : (
-        <p className="text-metadata text-muted-foreground">No progress log yet</p>
+        <p className="text-metadata text-muted-foreground">
+          {messages.board.noProgressLog}
+        </p>
       )}
 
       {timestamp && (
         <span
-          title={formatExactTime(timestamp)}
+          title={formatExactTime(timestamp, intlLocale)}
           className="text-metadata text-muted-foreground"
         >
-          {formatRelativeTime(timestamp)} · {formatExactTime(timestamp)}
+          {formatRelativeTime(timestamp, undefined, intlLocale)} ·{' '}
+          {formatExactTime(timestamp, intlLocale)}
         </span>
       )}
     </button>
@@ -93,6 +97,7 @@ function CompactTaskSummaryRow({
 }
 
 export function DateWorkView() {
+  const { intlLocale, messages } = useI18n()
   const { dateKey: routeDateKey } = useParams()
   const navigate = useNavigate()
   const { snapshot, snapshotStatus } = useWorkspace()
@@ -112,11 +117,12 @@ export function DateWorkView() {
 
   const formattedTitle = useMemo(
     () =>
-      new Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(
+      new Intl.DateTimeFormat(intlLocale, { dateStyle: 'full' }).format(
         parseLocalDate(validDateKey),
       ),
-    [validDateKey],
+    [intlLocale, validDateKey],
   )
+  const formattedDueDate = formatDueDate(validDateKey, intlLocale)
 
   return (
     <section aria-labelledby="date-view-heading" className="grid gap-5">
@@ -124,7 +130,7 @@ export function DateWorkView() {
         <div className="grid gap-0.5">
           <div className="flex items-center gap-2 text-metadata text-muted-foreground">
             <CalendarDays className="size-3.5" />
-            <span>Date activity ({formatDueDate(validDateKey)})</span>
+            <span>{messages.calendar.dateActivity(formattedDueDate)}</span>
           </div>
           <h1 id="date-view-heading" className="text-page-title font-semibold">
             {formattedTitle}
@@ -136,23 +142,23 @@ export function DateWorkView() {
             type="button"
             variant="outline"
             size="sm"
-            aria-label="Previous day"
+            aria-label={messages.calendar.previousDayAria}
             onClick={() => navigate(`/date/${shiftDateKey(validDateKey, -1)}`)}
           >
             <ChevronLeft className="size-4" />
-            Prev
+            {messages.calendar.previousDayShort}
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link to="/today">Today</Link>
+            <Link to="/today">{messages.calendar.todayButton}</Link>
           </Button>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            aria-label="Next day"
+            aria-label={messages.calendar.nextDayAria}
             onClick={() => navigate(`/date/${shiftDateKey(validDateKey, 1)}`)}
           >
-            Next
+            {messages.calendar.nextDayShort}
             <ChevronRight className="size-4" />
           </Button>
         </div>
@@ -163,25 +169,24 @@ export function DateWorkView() {
           role="alert"
           className="rounded-card border border-[var(--warning)]/35 bg-[var(--warning)]/10 px-3 py-2 text-ui"
         >
-          Invalid calendar date &ldquo;{routeDateKey}&rdquo;. Showing today&apos;s
-          date instead.
+          {messages.calendar.invalidDateNotice(routeDateKey)}
         </div>
       )}
 
       {snapshotStatus === 'loading' ? (
         <div className="rounded-card border bg-surface p-6 text-ui text-muted-foreground">
-          Loading local history for {validDateKey}...
+          {messages.calendar.loadingDateHistory(validDateKey)}
         </div>
       ) : totalOnDate === 0 ? (
         <div className="grid justify-items-start gap-2 rounded-card border bg-surface p-6">
           <h2 className="text-card-title font-semibold text-foreground">
-            No tasks recorded on {formatDueDate(validDateKey)}
+            {messages.calendar.emptyDateTitle(formattedDueDate)}
           </h2>
           <p className="text-ui text-muted-foreground">
-            No tasks had a due date, WorkLog update, or completion on this day.
+            {messages.calendar.emptyDateDescription}
           </p>
           <Button asChild variant="outline" size="sm">
-            <Link to="/all">Back to All Tasks</Link>
+            <Link to="/all">{messages.calendar.backToAllTasks}</Link>
           </Button>
         </div>
       ) : (
@@ -191,11 +196,11 @@ export function DateWorkView() {
               id="date-due-heading"
               className="text-ui font-semibold text-secondary-foreground"
             >
-              Due ({summary.due.length})
+              {messages.calendar.dueSection(summary.due.length)}
             </h2>
             {summary.due.length === 0 ? (
               <p className="text-metadata text-muted-foreground">
-                No tasks due on this date.
+                {messages.calendar.dueEmpty}
               </p>
             ) : (
               <div className="grid gap-2">
@@ -214,11 +219,11 @@ export function DateWorkView() {
               id="date-updated-heading"
               className="text-ui font-semibold text-secondary-foreground"
             >
-              Updated ({summary.updated.length})
+              {messages.calendar.updatedSection(summary.updated.length)}
             </h2>
             {summary.updated.length === 0 ? (
               <p className="text-metadata text-muted-foreground">
-                No WorkLogs created on this date.
+                {messages.calendar.updatedEmpty}
               </p>
             ) : (
               <div className="grid gap-2">
@@ -228,7 +233,10 @@ export function DateWorkView() {
                     projection={item.projection}
                     subtitle={
                       item.dayWorkLogs.length > 1
-                        ? `${item.latestDayWorkLog.content} (+${item.dayWorkLogs.length - 1} more log${item.dayWorkLogs.length - 1 === 1 ? '' : 's'} this day)`
+                        ? messages.calendar.extraLogsThisDay(
+                            item.latestDayWorkLog.content,
+                            item.dayWorkLogs.length - 1,
+                          )
                         : item.latestDayWorkLog.content
                     }
                     timestamp={item.latestDayWorkLog.createdAt}
@@ -243,11 +251,11 @@ export function DateWorkView() {
               id="date-completed-heading"
               className="text-ui font-semibold text-secondary-foreground"
             >
-              Completed ({summary.completed.length})
+              {messages.calendar.completedSection(summary.completed.length)}
             </h2>
             {summary.completed.length === 0 ? (
               <p className="text-metadata text-muted-foreground">
-                No tasks completed on this date.
+                {messages.calendar.completedEmpty}
               </p>
             ) : (
               <div className="grid gap-2">

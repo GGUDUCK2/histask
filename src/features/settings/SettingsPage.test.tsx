@@ -1,6 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { LanguageProvider } from '@/app/LanguageProvider'
 import { ThemeProvider } from '@/app/ThemeProvider'
 import type { HistaskDatabase } from '@/db/database'
 import { DexieSettingsRepository } from '@/repositories/settings'
@@ -18,9 +19,12 @@ afterEach(clearTestDatabases)
 
 function renderSettings(database: HistaskDatabase) {
   installMatchMedia(false)
+  const settingsRepository = new DexieSettingsRepository(database)
   return render(
-    <ThemeProvider repository={new DexieSettingsRepository(database)}>
-      <SettingsPage database={database} />
+    <ThemeProvider repository={settingsRepository}>
+      <LanguageProvider repository={settingsRepository}>
+        <SettingsPage database={database} />
+      </LanguageProvider>
     </ThemeProvider>,
   )
 }
@@ -297,5 +301,85 @@ describe('Settings', () => {
       'true',
     )
     expect(trigger).toHaveFocus()
+  })
+
+  it('allows clearing a validated backup selection before reviewing', async () => {
+    const database = await createTestDatabase('settings-import-clear')
+    const user = userEvent.setup()
+    render(
+      <BackupControls
+        exportService={new BackupExportService(database)}
+        importService={new BackupImportService(database)}
+        runMutation={async (operation) => {
+          await operation()
+          return true
+        }}
+        writePending={false}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Review' })).toBeDisabled()
+
+    const file = new File(
+      [JSON.stringify(backupPayloadFixture())],
+      'clearable-backup.json',
+      { type: 'application/json' },
+    )
+    Object.defineProperty(file, 'text', {
+      value: () => Promise.resolve(JSON.stringify(backupPayloadFixture())),
+    })
+
+    await user.upload(screen.getByLabelText('Import backup'), file)
+    expect(
+      await screen.findByText(
+        '1 Cards · 1 WorkLogs · 1 Categories · 1 Tags',
+      ),
+    ).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Review' })).toBeEnabled()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Clear selected file' }),
+    )
+    expect(screen.getByRole('button', { name: 'Review' })).toBeDisabled()
+    expect(screen.queryByText(/clearable-backup\.json/)).not.toBeInTheDocument()
+  })
+
+  it('switches interface language, persists choice, and resets on DELETE', async () => {
+    const database = await createTestDatabase('settings-language-toggle')
+    const user = userEvent.setup()
+    renderSettings(database)
+
+    const selectTrigger = screen.getByRole('combobox', { name: 'Language' })
+    await user.click(selectTrigger)
+    await user.click(screen.getByRole('option', { name: '한국어' }))
+
+    expect(
+      await screen.findByRole('heading', { name: '설정' }),
+    ).toBeVisible()
+    expect(document.documentElement.lang).toBe('ko')
+    await waitFor(async () =>
+      expect(await database.settings.get('language')).toEqual({
+        key: 'language',
+        value: 'ko',
+      }),
+    )
+
+    await user.click(screen.getByRole('button', { name: '삭제…' }))
+    const dialog = screen.getByRole('dialog')
+    await user.type(
+      within(dialog).getByLabelText('확인을 위해 DELETE를 입력하세요'),
+      'DELETE',
+    )
+    await user.click(
+      within(dialog).getByRole('button', { name: '전체 데이터 삭제' }),
+    )
+
+    await waitFor(async () => {
+      expect(await database.settings.count()).toBe(0)
+    })
+    expect(
+      await screen.findByRole('heading', { name: 'Settings' }),
+    ).toBeVisible()
+    expect(document.documentElement.lang).toBe('en')
   })
 })

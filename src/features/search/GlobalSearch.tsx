@@ -6,10 +6,10 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react'
 import { Search, X } from 'lucide-react'
+import { useI18n } from '@/app/language-context'
 import { Input } from '@/components/ui/input'
 import { useWorkspace } from '@/features/workspace/workspace-context'
-import { SEARCH_SOURCE_LABELS, type CardSearchResult } from '@/types/card-query'
-import { CARD_STATUS_LABELS } from '@/types/domain'
+import type { CardSearchResult } from '@/types/card-query'
 import { getClassificationMeta } from '@/utils/classification-styles'
 import { cn } from '@/utils/cn'
 import { formatRelativeTime } from '@/utils/dates'
@@ -43,6 +43,7 @@ function HighlightedSnippet({
 }
 
 export function GlobalSearch() {
+  const { intlLocale, messages } = useI18n()
   const {
     searchQuery,
     setSearchQuery,
@@ -137,7 +138,7 @@ export function GlobalSearch() {
             ref={searchInputRef}
             type="search"
             role="combobox"
-            aria-label="Search tasks"
+            aria-label={messages.search.inputAria}
             aria-expanded={showResults}
             aria-controls={listboxId}
             aria-activedescendant={activeDescendantId}
@@ -155,13 +156,13 @@ export function GlobalSearch() {
               lastCompositionEndAtRef.current = event.timeStamp
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Search tasks... (/)"
+            placeholder={messages.search.placeholder}
             className="h-control-sm pl-8 pr-7 text-ui"
           />
           {searchQuery && (
             <button
               type="button"
-              aria-label="Clear search"
+              aria-label={messages.search.clearSearchAria}
               onClick={() => {
                 setHighlightedIndex(0)
                 setSearchQuery('')
@@ -180,12 +181,12 @@ export function GlobalSearch() {
         <div
           id={listboxId}
           role="listbox"
-          aria-label="Matching tasks"
+          aria-label={messages.search.listboxAria}
           className="absolute right-0 top-[calc(100%+6px)] z-50 max-h-[min(24rem,calc(100svh-5rem))] w-[min(24rem,calc(100vw-2rem))] overflow-y-auto rounded-card border bg-popover p-1.5 text-popover-foreground shadow-overlay ui-fade"
         >
           {visibleResults.length === 0 ? (
             <div className="px-3 py-4 text-center text-ui text-muted-foreground">
-              No matching tasks for &ldquo;{searchQuery.trim()}&rdquo;
+              {messages.search.noResults(searchQuery.trim())}
             </div>
           ) : (
             <div className="grid gap-1">
@@ -220,16 +221,16 @@ export function GlobalSearch() {
                         )}
                       </span>
                       <span className="shrink-0 rounded-tag border bg-surface px-1.5 py-0 text-tag text-muted-foreground">
-                        {CARD_STATUS_LABELS[card.status]}
+                        {messages.statuses[card.status]}
                       </span>
                     </div>
 
                     {excerpt.source !== 'title' && (
                       <p className="line-clamp-2 text-metadata text-muted-foreground break-words">
                         <span className="mr-1 font-medium text-secondary-foreground">
-                          {SEARCH_SOURCE_LABELS[excerpt.source]}
+                          {messages.searchSources[excerpt.source]}
                           {excerpt.workLogCreatedAt
-                            ? ` (${formatRelativeTime(excerpt.workLogCreatedAt)})`
+                            ? ` (${formatRelativeTime(excerpt.workLogCreatedAt, undefined, intlLocale)})`
                             : ''}
                           :
                         </span>
@@ -273,8 +274,10 @@ export function GlobalSearch() {
               })}
               {searchResults.length > visibleResults.length && (
                 <p className="border-t px-2.5 py-1.5 text-metadata text-muted-foreground">
-                  Showing {visibleResults.length} of {searchResults.length}{' '}
-                  matches. Board cards are filtered in place.
+                  {messages.search.showingTopMatches(
+                    visibleResults.length,
+                    searchResults.length,
+                  )}
                 </p>
               )}
             </div>

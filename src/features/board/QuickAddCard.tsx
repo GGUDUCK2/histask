@@ -6,6 +6,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react'
 import { Plus, X } from 'lucide-react'
+import { useI18n } from '@/app/language-context'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -26,17 +27,13 @@ import {
 } from '@/components/ui/select'
 import { useWorkspace } from '@/features/workspace/workspace-context'
 import { ValidationError } from '@/services/validation'
-import {
-  CARD_STATUSES,
-  CARD_STATUS_LABELS,
-  type CardStatus,
-} from '@/types/domain'
+import { CARD_STATUSES, type CardStatus } from '@/types/domain'
 import { isReactImeComposing } from '@/utils/keyboard'
 
-function toFriendlyError(error: unknown): string {
+function toFriendlyError(error: unknown, fallback: string): string {
   if (error instanceof ValidationError) return error.message
   if (error instanceof Error && error.message.trim()) return error.message
-  return 'Could not create task locally. Please try again.'
+  return fallback
 }
 
 export function InlineQuickAdd({
@@ -48,6 +45,7 @@ export function InlineQuickAdd({
   onCancel: () => void
   onCreated?: () => void
 }) {
+  const { messages } = useI18n()
   const { services } = useWorkspace()
   const [title, setTitle] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -63,7 +61,7 @@ export function InlineQuickAdd({
   async function handleSubmit() {
     if (submitLockRef.current) return
     if (!title.trim()) {
-      setError('Task title is required.')
+      setError(messages.board.taskTitleRequired)
       inputRef.current?.focus()
       return
     }
@@ -79,7 +77,9 @@ export function InlineQuickAdd({
       setTitle('')
       onCreated?.()
     } catch (caughtError) {
-      setError(toFriendlyError(caughtError))
+      setError(
+        toFriendlyError(caughtError, messages.board.createTaskFallbackError),
+      )
     } finally {
       submitLockRef.current = false
       setSubmitting(false)
@@ -106,7 +106,7 @@ export function InlineQuickAdd({
       className="grid gap-2 rounded-card border border-[var(--border-strong)] bg-surface p-2.5"
     >
       <Label htmlFor={`quick-add-${status}`} className="sr-only">
-        New {CARD_STATUS_LABELS[status]} task title
+        {messages.board.newColumnTaskLabel(messages.statuses[status])}
       </Label>
       <Input
         ref={inputRef}
@@ -120,7 +120,7 @@ export function InlineQuickAdd({
           lastCompositionEndAtRef.current = event.timeStamp
         }}
         onKeyDown={onKeyDown}
-        placeholder="Task title..."
+        placeholder={messages.board.taskTitlePlaceholder}
         disabled={submitting}
         aria-invalid={error !== null}
         aria-describedby={error ? `quick-add-error-${status}` : undefined}
@@ -143,11 +143,11 @@ export function InlineQuickAdd({
           disabled={submitting}
         >
           <X className="size-3.5" />
-          Cancel
+          {messages.common.cancel}
         </Button>
         <Button type="submit" size="sm" disabled={submitting}>
           <Plus className="size-3.5" />
-          {submitting ? 'Adding...' : 'Add'}
+          {submitting ? messages.board.adding : messages.board.add}
         </Button>
       </div>
     </form>
@@ -175,6 +175,7 @@ function QuickCreateDialogInner({
   initialStatus: CardStatus
   onClose: () => void
 }) {
+  const { messages } = useI18n()
   const { services } = useWorkspace()
   const [title, setTitle] = useState('')
   const [status, setStatus] = useState<CardStatus>(initialStatus)
@@ -194,7 +195,7 @@ function QuickCreateDialogInner({
     event.preventDefault()
     if (submitLockRef.current) return
     if (!title.trim()) {
-      setError('Task title is required.')
+      setError(messages.board.taskTitleRequired)
       inputRef.current?.focus()
       return
     }
@@ -210,7 +211,9 @@ function QuickCreateDialogInner({
       setTitle('')
       onClose()
     } catch (caughtError) {
-      setError(toFriendlyError(caughtError))
+      setError(
+        toFriendlyError(caughtError, messages.board.createTaskFallbackError),
+      )
     } finally {
       submitLockRef.current = false
       setSubmitting(false)
@@ -235,15 +238,16 @@ function QuickCreateDialogInner({
     >
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>New task</DialogTitle>
+          <DialogTitle>{messages.board.newTaskDialogTitle}</DialogTitle>
           <DialogDescription>
-            Create a task with a title and initial status. You can add notes and
-            WorkLogs anytime.
+            {messages.board.newTaskDialogDescription}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-3">
           <div className="grid gap-1.5">
-            <Label htmlFor="global-new-task-title">Title</Label>
+            <Label htmlFor="global-new-task-title">
+              {messages.board.titleFieldLabel}
+            </Label>
             <Input
               ref={inputRef}
               id="global-new-task-title"
@@ -256,7 +260,7 @@ function QuickCreateDialogInner({
                 lastCompositionEndAtRef.current = event.timeStamp
               }}
               onKeyDown={handleInputKeyDown}
-              placeholder="What needs progress?"
+              placeholder={messages.board.titleDialogPlaceholder}
               disabled={submitting}
               aria-invalid={error !== null}
               aria-describedby={error ? 'global-new-task-error' : undefined}
@@ -273,7 +277,9 @@ function QuickCreateDialogInner({
           </div>
 
           <div className="grid gap-1.5">
-            <Label htmlFor="global-new-task-status">Column</Label>
+            <Label htmlFor="global-new-task-status">
+              {messages.board.columnFieldLabel}
+            </Label>
             <Select
               value={status}
               onValueChange={(value) => setStatus(value as CardStatus)}
@@ -285,7 +291,7 @@ function QuickCreateDialogInner({
               <SelectContent>
                 {CARD_STATUSES.map((item) => (
                   <SelectItem key={item} value={item}>
-                    {CARD_STATUS_LABELS[item]}
+                    {messages.statuses[item]}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -299,10 +305,10 @@ function QuickCreateDialogInner({
               onClick={onClose}
               disabled={submitting}
             >
-              Cancel
+              {messages.common.cancel}
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? 'Creating...' : 'Create task'}
+              {submitting ? messages.board.creating : messages.board.createTask}
             </Button>
           </DialogFooter>
         </form>

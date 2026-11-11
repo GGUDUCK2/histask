@@ -3,7 +3,7 @@ import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import type { RepositoryQuery } from '@/repositories/query'
-import type { SettingsRepository } from '@/repositories/settings'
+import type { ThemePreferenceRepository } from '@/repositories/settings'
 import { ThemeProvider } from './ThemeProvider'
 import { useTheme } from './theme-context'
 import { installMatchMedia } from '@/test/match-media'
@@ -72,7 +72,7 @@ function unusedThemeQuery(): RepositoryQuery<Theme> {
 it('loads and saves a repository-backed theme preference', async () => {
   installMatchMedia(false)
   let saved: Theme = 'dark'
-  const repository: SettingsRepository = {
+  const repository: ThemePreferenceRepository = {
     getTheme: vi.fn(async () => saved),
     setTheme: vi.fn(async (theme) => {
       saved = theme
@@ -94,7 +94,7 @@ it('loads and saves a repository-backed theme preference', async () => {
 
 it('keeps the current theme and reports a failed preference write', async () => {
   installMatchMedia(false)
-  const repository: SettingsRepository = {
+  const repository: ThemePreferenceRepository = {
     getTheme: vi.fn(async (): Promise<Theme> => 'system'),
     setTheme: vi.fn(async () => {
       throw new Error('write failed')

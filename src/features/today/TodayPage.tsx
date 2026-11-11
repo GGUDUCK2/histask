@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Plus } from 'lucide-react'
 import { Link } from 'react-router'
+import { useI18n } from '@/app/language-context'
 import { Button } from '@/components/ui/button'
 import { useWorkspace } from '@/features/workspace/workspace-context'
 import type { BoardCardProjection } from '@/services/board-query'
 import { millisecondsUntilNextLocalDay } from '@/services/dashboard'
 import { computeDateWorkSummary } from '@/services/date-work'
-import { CARD_STATUS_LABELS, PRIORITY_LABELS } from '@/types/domain'
 import {
   CARD_STATUS_VISUAL,
   getClassificationMeta,
@@ -31,6 +31,7 @@ function TodayTaskItem({
   timestamp?: string
   extraMeta?: string
 }) {
+  const { intlLocale, messages } = useI18n()
   const { openCard } = useWorkspace()
   const { card, category, latestWorkLog } = projection
   const displayExcerpt = excerpt ?? latestWorkLog?.content
@@ -64,7 +65,7 @@ function TodayTaskItem({
                 PRIORITY_VISUAL[card.priority].badgeClass,
               )}
             >
-              {PRIORITY_LABELS[card.priority]}
+              {messages.priorities[card.priority]}
             </span>
           )}
           <span
@@ -73,7 +74,7 @@ function TodayTaskItem({
               statusVisual.badgeClass,
             )}
           >
-            {CARD_STATUS_LABELS[card.status]}
+            {messages.statuses[card.status]}
           </span>
         </div>
       </div>
@@ -83,14 +84,17 @@ function TodayTaskItem({
           {displayExcerpt}
         </p>
       ) : (
-        <p className="text-metadata text-muted-foreground">No progress log yet</p>
+        <p className="text-metadata text-muted-foreground">
+          {messages.board.noProgressLog}
+        </p>
       )}
 
       {(timestamp || extraMeta) && (
         <div className="flex flex-wrap items-center gap-2 text-metadata text-muted-foreground">
           {timestamp && (
-            <span title={formatExactTime(timestamp)}>
-              {formatRelativeTime(timestamp)} · {formatExactTime(timestamp)}
+            <span title={formatExactTime(timestamp, intlLocale)}>
+              {formatRelativeTime(timestamp, undefined, intlLocale)} ·{' '}
+              {formatExactTime(timestamp, intlLocale)}
             </span>
           )}
           {extraMeta && <span>{extraMeta}</span>}
@@ -101,6 +105,7 @@ function TodayTaskItem({
 }
 
 export function TodayPage() {
+  const { intlLocale, messages } = useI18n()
   const { snapshot, snapshotStatus, openQuickCreate } = useWorkspace()
   const [todayKey, setTodayKey] = useState(() => toLocalDateKey(new Date()))
 
@@ -141,10 +146,10 @@ export function TodayPage() {
 
   const todayFormatted = useMemo(
     () =>
-      new Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(
+      new Intl.DateTimeFormat(intlLocale, { dateStyle: 'full' }).format(
         parseLocalDate(todayKey),
       ),
-    [todayKey],
+    [intlLocale, todayKey],
   )
 
   const totalTodayCount =
@@ -162,7 +167,7 @@ export function TodayPage() {
             <span>{todayFormatted}</span>
           </div>
           <h1 id="today-heading" className="text-page-title font-semibold">
-            Today
+            {messages.today.title}
           </h1>
         </div>
 
@@ -173,26 +178,25 @@ export function TodayPage() {
             onClick={(event) => openQuickCreate('TODO', event.currentTarget)}
           >
             <Plus className="size-4" />
-            New task
+            {messages.appShell.newTask}
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link to="/all">Open Board</Link>
+            <Link to="/all">{messages.today.openBoard}</Link>
           </Button>
         </div>
       </div>
 
       {snapshotStatus === 'loading' ? (
         <div className="rounded-card border bg-surface p-6 text-ui text-muted-foreground">
-          Loading today&apos;s activity...
+          {messages.today.loading}
         </div>
       ) : totalTodayCount === 0 ? (
         <div className="grid justify-items-start gap-2 rounded-card border bg-surface p-6">
           <h2 className="text-card-title font-semibold text-foreground">
-            Nothing due, updated, or completed today
+            {messages.today.emptyTitle}
           </h2>
           <p className="text-ui text-muted-foreground">
-            Create a task or log progress on an active card to see today&apos;s
-            summary here.
+            {messages.today.emptyDescription}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -201,10 +205,10 @@ export function TodayPage() {
               onClick={(event) => openQuickCreate('TODO', event.currentTarget)}
             >
               <Plus className="size-4" />
-              Create task
+              {messages.board.createTask}
             </Button>
             <Button asChild variant="outline" size="sm">
-              <Link to="/all">View All Tasks</Link>
+              <Link to="/all">{messages.today.viewAllTasks}</Link>
             </Button>
           </div>
         </div>
@@ -215,11 +219,11 @@ export function TodayPage() {
               id="today-due-heading"
               className="text-ui font-semibold text-secondary-foreground"
             >
-              Due Today ({summary.due.length})
+              {messages.today.dueToday(summary.due.length)}
             </h2>
             {summary.due.length === 0 ? (
               <p className="text-metadata text-muted-foreground">
-                No tasks due today.
+                {messages.today.dueTodayEmpty}
               </p>
             ) : (
               <div className="grid gap-2">
@@ -238,11 +242,11 @@ export function TodayPage() {
               id="today-updated-heading"
               className="text-ui font-semibold text-secondary-foreground"
             >
-              Updated Today ({summary.updated.length})
+              {messages.today.updatedToday(summary.updated.length)}
             </h2>
             {summary.updated.length === 0 ? (
               <p className="text-metadata text-muted-foreground">
-                No WorkLogs recorded yet today.
+                {messages.today.updatedTodayEmpty}
               </p>
             ) : (
               <div className="grid gap-2">
@@ -254,7 +258,7 @@ export function TodayPage() {
                     timestamp={item.latestDayWorkLog.createdAt}
                     extraMeta={
                       item.dayWorkLogs.length > 1
-                        ? `${item.dayWorkLogs.length} logs today`
+                        ? messages.today.logsToday(item.dayWorkLogs.length)
                         : undefined
                     }
                   />
@@ -268,11 +272,11 @@ export function TodayPage() {
               id="today-completed-heading"
               className="text-ui font-semibold text-secondary-foreground"
             >
-              Completed Today ({summary.completed.length})
+              {messages.today.completedToday(summary.completed.length)}
             </h2>
             {summary.completed.length === 0 ? (
               <p className="text-metadata text-muted-foreground">
-                No tasks completed today.
+                {messages.today.completedTodayEmpty}
               </p>
             ) : (
               <div className="grid gap-2">
@@ -296,7 +300,7 @@ export function TodayPage() {
                 id="today-created-heading"
                 className="text-ui font-semibold text-muted-foreground"
               >
-                Created Today ({summary.created.length})
+                {messages.today.createdToday(summary.created.length)}
               </h2>
               <div className="grid gap-2">
                 {summary.created.map((projection) => (

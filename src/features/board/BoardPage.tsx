@@ -2,17 +2,14 @@ import { useMemo, useState } from 'react'
 import { closestCorners, DndContext, DragOverlay } from '@dnd-kit/core'
 import { AlertCircle, Info, Plus, RotateCcw, Upload } from 'lucide-react'
 import { Link } from 'react-router'
+import { useI18n } from '@/app/language-context'
 import { Button } from '@/components/ui/button'
 import { MetricsRow } from '@/features/dashboard/MetricsRow'
 import { FilterSortBar } from '@/features/filters/FilterSortBar'
 import { useWorkspace } from '@/features/workspace/workspace-context'
 import type { BoardCardProjection } from '@/services/board-query'
 import {
-  CARD_SORT_LABELS,
-} from '@/types/card-query'
-import {
   CARD_STATUSES,
-  CARD_STATUS_LABELS,
   type CardStatus,
 } from '@/types/domain'
 import { KanbanColumn } from './KanbanColumn'
@@ -21,36 +18,15 @@ import { useBoardDnd } from './useBoardDnd'
 
 export type BoardRouteView = 'all' | 'inProgress' | 'waiting' | 'completed'
 
-const VIEW_METADATA: Record<
-  BoardRouteView,
-  {
-    title: string
-    subtitle: string
-    status?: CardStatus
-  }
-> = {
-  all: {
-    title: 'All Tasks',
-    subtitle: 'Track task progress across statuses with the latest WorkLog on every card.',
-  },
-  inProgress: {
-    title: 'In Progress',
-    subtitle: 'Tasks actively moving forward right now.',
-    status: 'IN_PROGRESS',
-  },
-  waiting: {
-    title: 'Waiting',
-    subtitle: 'Tasks paused on external feedback, reviews, or dependencies.',
-    status: 'WAITING',
-  },
-  completed: {
-    title: 'Completed',
-    subtitle: 'Finished tasks with recorded completion history.',
-    status: 'DONE',
-  },
+const VIEW_STATUS_MAP: Record<BoardRouteView, CardStatus | undefined> = {
+  all: undefined,
+  inProgress: 'IN_PROGRESS',
+  waiting: 'WAITING',
+  completed: 'DONE',
 }
 
 export function BoardPage({ view }: { view: BoardRouteView }) {
+  const { messages } = useI18n()
   const {
     snapshot,
     snapshotStatus,
@@ -66,8 +42,8 @@ export function BoardPage({ view }: { view: BoardRouteView }) {
   } = useWorkspace()
 
   const [quickAddColumn, setQuickAddColumn] = useState<CardStatus | null>(null)
-  const viewInfo = VIEW_METADATA[view]
-  const focusedStatus = viewInfo.status
+  const viewInfo = messages.board.views[view]
+  const focusedStatus = VIEW_STATUS_MAP[view]
 
   const cardsByStatus = useMemo(() => {
     const grouped: Record<CardStatus, BoardCardProjection[]> = {
@@ -131,8 +107,7 @@ export function BoardPage({ view }: { view: BoardRouteView }) {
         >
           <AlertCircle className="size-4 shrink-0" />
           <span>
-            Could not load tasks from local IndexedDB storage. Refresh the page
-            or verify storage status in Settings.
+            {messages.board.loadError}
           </span>
         </div>
       </section>
@@ -157,7 +132,7 @@ export function BoardPage({ view }: { view: BoardRouteView }) {
           }
         >
           <Plus className="size-4" />
-          New task
+          {messages.appShell.newTask}
         </Button>
       </div>
 
@@ -169,9 +144,11 @@ export function BoardPage({ view }: { view: BoardRouteView }) {
         <div className="flex items-center gap-2 rounded-card border bg-surface-subtle px-3 py-2 text-metadata text-muted-foreground">
           <Info className="size-3.5 shrink-0" />
           <span>
-            Sorted by <strong>{CARD_SORT_LABELS[sortMode]}</strong>.
-            Within-column manual reordering is disabled in this mode
-            {!isStatusView ? '; dragging across columns still updates status.' : '.'}
+            {messages.board.sortedNoticePrefix}{' '}
+            <strong>{messages.sortModes[sortMode]}</strong>.{' '}
+            {isStatusView
+              ? messages.board.sortedNoticeBodySingle
+              : messages.board.sortedNoticeBodyMulti}
           </span>
         </div>
       )}
@@ -189,7 +166,7 @@ export function BoardPage({ view }: { view: BoardRouteView }) {
             size="sm"
             onClick={() => setDndNotice(null)}
           >
-            Dismiss
+            {messages.common.dismiss}
           </Button>
         </div>
       )}
@@ -212,7 +189,7 @@ export function BoardPage({ view }: { view: BoardRouteView }) {
                 onClick={retryFailedMove}
               >
                 <RotateCcw className="size-3.5" />
-                Retry
+                {messages.common.retry}
               </Button>
             )}
             <Button
@@ -221,7 +198,7 @@ export function BoardPage({ view }: { view: BoardRouteView }) {
               variant="ghost"
               onClick={dismissError}
             >
-              Dismiss
+              {messages.common.dismiss}
             </Button>
           </div>
         </div>
@@ -229,19 +206,20 @@ export function BoardPage({ view }: { view: BoardRouteView }) {
 
       {snapshotStatus === 'loading' ? (
         <div className="rounded-card border bg-surface p-6 text-ui text-muted-foreground">
-          Loading local tasks...
+          {messages.board.loadingTasks}
         </div>
       ) : totalInViewBase === 0 ? (
         <div className="grid justify-items-start gap-3 rounded-card border bg-surface p-6">
           <div className="grid gap-1">
             <h2 className="text-card-title font-semibold text-foreground">
               {isStatusView
-                ? `No ${CARD_STATUS_LABELS[focusedStatus].toLowerCase()} tasks yet`
-                : 'No tasks yet'}
+                ? messages.board.emptyStatusTitle(
+                    messages.statuses[focusedStatus],
+                  )
+                : messages.board.emptyAllTitle}
             </h2>
             <p className="text-ui text-muted-foreground">
-              Create your first task or restore an existing Histask backup
-              stored on this device.
+              {messages.board.emptyDescription}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -253,12 +231,12 @@ export function BoardPage({ view }: { view: BoardRouteView }) {
               }
             >
               <Plus className="size-4" />
-              Create task
+              {messages.board.createTask}
             </Button>
             <Button asChild variant="outline" size="sm">
               <Link to="/settings">
                 <Upload className="size-4" />
-                Import backup
+                {messages.board.importBackup}
               </Link>
             </Button>
           </div>
@@ -267,11 +245,10 @@ export function BoardPage({ view }: { view: BoardRouteView }) {
         <div className="grid justify-items-start gap-3 rounded-card border bg-surface p-6">
           <div className="grid gap-1">
             <h2 className="text-card-title font-semibold text-foreground">
-              No matching tasks
+              {messages.board.noMatchingTitle}
             </h2>
             <p className="text-ui text-muted-foreground">
-              No active tasks match your current search query or selected
-              filters.
+              {messages.board.noMatchingDescription}
             </p>
           </div>
           <Button
@@ -281,7 +258,7 @@ export function BoardPage({ view }: { view: BoardRouteView }) {
             onClick={clearFiltersAndSearch}
           >
             <RotateCcw className="size-3.5" />
-            Clear all filters
+            {messages.board.clearAllFilters}
           </Button>
         </div>
       ) : (

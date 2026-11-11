@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { Menu, Plus, Settings } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router'
+import { useI18n } from '@/app/language-context'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -19,6 +20,7 @@ import { PwaUpdateBanner } from './PwaUpdateBanner'
 import { Sidebar } from './Sidebar'
 
 export function AppShell() {
+  const { messages } = useI18n()
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false)
   const mobileNavigationTrigger = useRef<HTMLButtonElement>(null)
   const {
@@ -66,7 +68,7 @@ export function AppShell() {
           <div className="flex min-w-0 items-center gap-2">
             <Button
               ref={mobileNavigationTrigger}
-              aria-label="Open navigation"
+              aria-label={messages.appShell.openNavigation}
               variant="ghost"
               size="icon"
               className="md:hidden"
@@ -81,7 +83,7 @@ export function AppShell() {
               histask
             </NavLink>
             <span className="hidden text-metadata text-muted-foreground lg:inline">
-              Local work history
+              {messages.appShell.brandSubtitle}
             </span>
           </div>
 
@@ -93,10 +95,10 @@ export function AppShell() {
               onClick={(event) => openQuickCreate('TODO', event.currentTarget)}
             >
               <Plus />
-              <span className="hidden sm:inline">New task</span>
+              <span className="hidden sm:inline">{messages.appShell.newTask}</span>
             </Button>
             <Button asChild variant="ghost" size="icon">
-              <NavLink to="/settings" aria-label="Settings">
+              <NavLink to="/settings" aria-label={messages.appShell.settings}>
                 <Settings />
               </NavLink>
             </Button>
@@ -123,10 +125,11 @@ export function AppShell() {
               mobileNavigationTrigger.current?.focus()
             }}
           >
-            <SheetTitle className="sr-only">Navigation</SheetTitle>
+            <SheetTitle className="sr-only">
+              {messages.appShell.navigationTitle}
+            </SheetTitle>
             <SheetDescription className="sr-only">
-              Navigate between Histask views, calendar dates, categories, and
-              tags.
+              {messages.appShell.navigationDescription}
             </SheetDescription>
             <Sidebar onNavigate={() => setMobileNavigationOpen(false)} />
           </SheetContent>

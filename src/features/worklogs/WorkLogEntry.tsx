@@ -5,6 +5,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
+import { useI18n } from '@/app/language-context'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -28,6 +29,7 @@ export function WorkLogEntry({
   workLog: WorkLog
   isLatest: boolean
 }) {
+  const { intlLocale, messages } = useI18n()
   const { services } = useWorkspace()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(workLog.content)
@@ -42,8 +44,8 @@ export function WorkLogEntry({
   const deleteLockRef = useRef(false)
 
   const wasEdited = workLog.updatedAt > workLog.createdAt
-  const createdExact = formatExactTime(workLog.createdAt)
-  const updatedExact = formatExactTime(workLog.updatedAt)
+  const createdExact = formatExactTime(workLog.createdAt, intlLocale)
+  const updatedExact = formatExactTime(workLog.updatedAt, intlLocale)
 
   function startEditing() {
     setDraft(workLog.content)
@@ -60,7 +62,7 @@ export function WorkLogEntry({
   async function saveEdit() {
     if (saveLockRef.current) return
     if (!draft.trim()) {
-      setEditError('WorkLog content cannot be empty.')
+      setEditError(messages.workLog.editEmptyError)
       return
     }
 
@@ -71,7 +73,7 @@ export function WorkLogEntry({
       await services.workLogs.update(workLog.id, draft)
       setEditing(false)
     } catch {
-      setEditError('Could not update WorkLog locally. Your draft was kept.')
+      setEditError(messages.workLog.updateFallbackError)
     } finally {
       saveLockRef.current = false
       setSaving(false)
@@ -87,7 +89,7 @@ export function WorkLogEntry({
       await services.workLogs.delete(workLog.id)
       setDeleteConfirmOpen(false)
     } catch {
-      setDeleteError('Could not delete this WorkLog locally.')
+      setDeleteError(messages.workLog.deleteFallbackError)
     } finally {
       deleteLockRef.current = false
       setDeleting(false)
@@ -132,16 +134,20 @@ export function WorkLogEntry({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-1.5 text-metadata text-muted-foreground">
             <time dateTime={workLog.createdAt} title={createdExact}>
-              {formatRelativeTime(workLog.createdAt)} · {createdExact}
+              {formatRelativeTime(workLog.createdAt, undefined, intlLocale)} ·{' '}
+              {createdExact}
             </time>
             {isLatest && (
               <span className="rounded-tag border border-[var(--accent)]/30 bg-[var(--accent-soft)] px-1.5 py-0 text-tag font-medium text-[var(--accent)]">
-                Latest
+                {messages.workLog.latestBadge}
               </span>
             )}
             {wasEdited && (
-              <span title={`Edited ${updatedExact}`} className="text-tag">
-                (edited)
+              <span
+                title={messages.workLog.editedTooltip(updatedExact)}
+                className="text-tag"
+              >
+                {messages.common.edited}
               </span>
             )}
           </div>
@@ -152,7 +158,7 @@ export function WorkLogEntry({
                 type="button"
                 variant="ghost"
                 size="icon"
-                aria-label="Edit WorkLog"
+                aria-label={messages.workLog.editAria}
                 className="size-6 text-muted-foreground hover:text-foreground"
                 onClick={startEditing}
               >
@@ -162,7 +168,7 @@ export function WorkLogEntry({
                 type="button"
                 variant="ghost"
                 size="icon"
-                aria-label="Delete WorkLog"
+                aria-label={messages.workLog.deleteAria}
                 className="size-6 text-muted-foreground hover:text-[var(--danger)]"
                 onClick={() => {
                   setDeleteError(null)
@@ -178,7 +184,7 @@ export function WorkLogEntry({
         {editing ? (
           <form onSubmit={handleEditFormSubmit} className="grid gap-2">
             <Textarea
-              aria-label="Edit WorkLog content"
+              aria-label={messages.workLog.editContentAria}
               value={draft}
               onChange={(event) => {
                 setDraft(event.target.value)
@@ -205,10 +211,10 @@ export function WorkLogEntry({
                 onClick={cancelEditing}
                 disabled={saving}
               >
-                Cancel
+                {messages.common.cancel}
               </Button>
               <Button type="submit" size="sm" disabled={saving}>
-                {saving ? 'Saving...' : 'Save'}
+                {saving ? messages.common.saving : messages.common.save}
               </Button>
             </div>
           </form>
@@ -227,11 +233,9 @@ export function WorkLogEntry({
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Delete WorkLog?</DialogTitle>
+            <DialogTitle>{messages.workLog.deleteDialogTitle}</DialogTitle>
             <DialogDescription>
-              This WorkLog entry will be permanently removed from this task&apos;s
-              progress history. The task card will update to show the previous
-              WorkLog (if any).
+              {messages.workLog.deleteDialogDescription}
             </DialogDescription>
           </DialogHeader>
           {deleteError && (
@@ -246,7 +250,7 @@ export function WorkLogEntry({
               onClick={() => setDeleteConfirmOpen(false)}
               disabled={deleting}
             >
-              Cancel
+              {messages.common.cancel}
             </Button>
             <Button
               type="button"
@@ -254,7 +258,9 @@ export function WorkLogEntry({
               onClick={() => void confirmDelete()}
               disabled={deleting}
             >
-              {deleting ? 'Deleting...' : 'Delete WorkLog'}
+              {deleting
+                ? messages.common.deleting
+                : messages.workLog.deleteConfirm}
             </Button>
           </DialogFooter>
         </DialogContent>

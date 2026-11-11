@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { RefreshCw, X } from 'lucide-react'
+import { useI18n } from '@/app/language-context'
 import { Button } from '@/components/ui/button'
 import {
   applyPwaUpdate,
@@ -9,6 +10,7 @@ import {
 } from '@/app/pwa'
 
 export function PwaUpdateBanner() {
+  const { messages } = useI18n()
   const { needRefresh } = useSyncExternalStore(
     subscribePwaState,
     getPwaSnapshot,
@@ -19,14 +21,15 @@ export function PwaUpdateBanner() {
 
   return (
     <aside
-      aria-label="Application update available"
+      aria-label={messages.appShell.pwaUpdateRegionLabel}
       className="fixed bottom-4 right-4 z-40 flex max-w-sm items-center gap-3 rounded-card border border-[var(--border-strong)] bg-surface p-3 text-ui shadow-overlay ui-fade"
     >
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-foreground">Update available</p>
+        <p className="font-medium text-foreground">
+          {messages.appShell.pwaUpdateTitle}
+        </p>
         <p className="text-metadata text-muted-foreground">
-          Reload when ready to use the latest app shell. Local data stays
-          preserved.
+          {messages.appShell.pwaUpdateDescription}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-1">
@@ -36,13 +39,13 @@ export function PwaUpdateBanner() {
           onClick={() => void applyPwaUpdate()}
         >
           <RefreshCw className="size-3.5" />
-          Reload
+          {messages.common.reload}
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          aria-label="Dismiss update notification"
+          aria-label={messages.appShell.pwaUpdateDismiss}
           className="size-7 text-muted-foreground"
           onClick={dismissPwaUpdate}
         >

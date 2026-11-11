@@ -53,5 +53,41 @@ describe('DexieSettingsRepository', () => {
     await expect(
       new DexieSettingsRepository(database).getTheme(),
     ).rejects.toMatchObject({ code: 'READ_FAILED' })
+    await expect(
+      new DexieSettingsRepository(database).getLanguage(),
+    ).rejects.toMatchObject({ code: 'READ_FAILED' })
+  })
+
+  it('defaults missing or invalid language settings to System and persists updates across reopen', async () => {
+    const name = testDatabaseName('settings-language')
+    const first = trackTestDatabase(new HistaskDatabase(name))
+    await first.open()
+    const repo = new DexieSettingsRepository(first)
+
+    await expect(repo.getLanguage()).resolves.toBe('system')
+    await first.settings.put({ key: 'language', value: 'fr' })
+    await expect(repo.getLanguage()).resolves.toBe('system')
+
+    await repo.setLanguage('ko')
+    closeHistaskDatabase(first)
+
+    const reopened = trackTestDatabase(new HistaskDatabase(name))
+    await reopened.open()
+    await expect(
+      new DexieSettingsRepository(reopened).getLanguage(),
+    ).resolves.toBe('ko')
+  })
+
+  it('emits reactive language changes', async () => {
+    const database = await createTestDatabase('settings-language-observe')
+    const repository = new DexieSettingsRepository(database)
+    const listener = vi.fn()
+    const unsubscribe = repository
+      .observeLanguage()
+      .subscribe(listener, vi.fn())
+
+    await repository.setLanguage('en')
+    await vi.waitFor(() => expect(listener).toHaveBeenLastCalledWith('en'))
+    unsubscribe()
   })
 })

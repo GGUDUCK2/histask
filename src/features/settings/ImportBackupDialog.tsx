@@ -1,5 +1,6 @@
-import { Button } from '@/components/ui/button'
 import type { RefObject } from 'react'
+import { useI18n } from '@/app/language-context'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -27,12 +28,13 @@ export function ImportBackupDialog({
   prepared: PreparedBackup
   returnFocusRef: RefObject<HTMLButtonElement | null>
 }) {
+  const { messages } = useI18n()
   const rows = [
-    ['Cards', prepared.counts.cards],
-    ['WorkLogs', prepared.counts.workLogs],
-    ['Categories', prepared.counts.categories],
-    ['Tags', prepared.counts.tags],
-    ['Tag links', prepared.counts.cardTags],
+    [messages.settings.importDialogRows.cards, prepared.counts.cards],
+    [messages.settings.importDialogRows.workLogs, prepared.counts.workLogs],
+    [messages.settings.importDialogRows.categories, prepared.counts.categories],
+    [messages.settings.importDialogRows.tags, prepared.counts.tags],
+    [messages.settings.importDialogRows.cardTags, prepared.counts.cardTags],
   ] as const
 
   return (
@@ -49,11 +51,9 @@ export function ImportBackupDialog({
         }}
       >
         <DialogHeader>
-          <DialogTitle>Replace existing data?</DialogTitle>
+          <DialogTitle>{messages.settings.importDialogTitle}</DialogTitle>
           <DialogDescription>
-            {fileName} passed full validation. Importing it replaces every
-            current Card, WorkLog, Category, Tag, and tag link. Theme settings
-            stay unchanged.
+            {messages.settings.importDialogDescription(fileName)}
           </DialogDescription>
         </DialogHeader>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-card border bg-surface-subtle p-3 text-ui">
@@ -65,8 +65,7 @@ export function ImportBackupDialog({
           ))}
         </dl>
         <p className="text-metadata text-muted-foreground">
-          This operation cannot be merged or undone. Export a current backup
-          first if you may need it.
+          {messages.settings.importDialogWarning}
         </p>
         <DialogFooter>
           <Button
@@ -74,10 +73,12 @@ export function ImportBackupDialog({
             disabled={pending}
             onClick={() => onOpenChange(false)}
           >
-            Cancel
+            {messages.common.cancel}
           </Button>
           <Button disabled={pending} onClick={onConfirm}>
-            {pending ? 'Replacing…' : 'Replace data'}
+            {pending
+              ? messages.settings.importDialogConfirming
+              : messages.settings.importDialogConfirm}
           </Button>
         </DialogFooter>
       </DialogContent>

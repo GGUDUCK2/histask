@@ -14,7 +14,7 @@ Histask는 브라우저 로컬 IndexedDB(`Dexie.js`)를 사용하는 Local-first
 - **실시간 Dashboard 지표**: 활성 필터와 독립적으로 비보관 기준 `Total`, `In Progress`, `Waiting`, `Done`, `Updated Today`(오늘 신규 WorkLog를 가진 고유 카드 수)를 표시합니다.
 - **검색·조합 필터·정렬**: Global Search(`/`)로 제목·설명·Category·Tag·WorkLog 내용을 부모 카드 단위로 검색하고, Category·Tag·Status·Priority·Due 조건을 AND로 조합해 정렬할 수 있습니다.
 - **Today & Mini Calendar**: 사이드바 Mini Calendar에서 날짜별 활동 표시를 확인하고, **Today**(`/#/today`) 및 날짜별 화면(`/#/date/YYYY-MM-DD`)에서 마감(Due)·갱신(Updated)·완료(Completed)·생성(Created) 기준 업무를 조회합니다.
-- **테마 & 전역 단축키**: **Settings**에서 `System` / `Light` / `Dark` 테마를 전환할 수 있습니다. 입력창·모달 포커스·IME 조합 중이 아닐 때 `N`(새 카드), `/`(검색 포커스), `Esc`(모달·Drawer 닫기)가 동작합니다.
+- **테마·다국어 & 전역 단축키**: **Settings**에서 `System` / `Light` / `Dark` 테마와 인터페이스 언어(`System` / `English` / `한국어`)를 전환할 수 있으며, JSON 백업 파일은 드래그·드롭 또는 파일 선택으로 즉시 검증·요약 확인 후 복원할 수 있습니다. 입력창·모달 포커스·IME 조합 중이 아닐 때 `N`(새 카드), `/`(검색 포커스), `Esc`(모달·Drawer 닫기)가 동작합니다.
 
 ---
 

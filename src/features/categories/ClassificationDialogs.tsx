@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Trash2 } from 'lucide-react'
+import { useI18n } from '@/app/language-context'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -46,6 +47,7 @@ function ClassificationDialogInner({
   dialogState: NonNullable<ClassificationDialogState>
   onClose: () => void
 }) {
+  const { messages } = useI18n()
   const { snapshot, services } = useWorkspace()
   const isCategory = dialogState.kind === 'category'
   const isEdit = dialogState.mode === 'edit'
@@ -73,8 +75,6 @@ function ClassificationDialogInner({
     })
   }, [])
 
-  const entityLabel = isCategory ? 'category' : 'tag'
-  const entityTitle = isCategory ? 'Category' : 'Tag'
   const affectedCount =
     currentItem === undefined
       ? 0
@@ -86,7 +86,11 @@ function ClassificationDialogInner({
     event.preventDefault()
     if (submitLockRef.current) return
     if (!name.trim()) {
-      setError(`${entityTitle} name is required.`)
+      setError(
+        isCategory
+          ? messages.classifications.categoryRequiredError
+          : messages.classifications.tagRequiredError,
+      )
       inputRef.current?.focus()
       return
     }
@@ -117,7 +121,11 @@ function ClassificationDialogInner({
       if (caughtError instanceof ValidationError) {
         setError(caughtError.message)
       } else {
-        setError(`Could not save ${entityLabel} locally.`)
+        setError(
+          isCategory
+            ? messages.classifications.categorySaveFallbackError
+            : messages.classifications.tagSaveFallbackError,
+        )
       }
     } finally {
       submitLockRef.current = false
@@ -139,7 +147,11 @@ function ClassificationDialogInner({
       setConfirmDeleteOpen(false)
       onClose()
     } catch {
-      setError(`Could not delete this ${entityLabel} locally.`)
+      setError(
+        isCategory
+          ? messages.classifications.categoryDeleteFallbackError
+          : messages.classifications.tagDeleteFallbackError,
+      )
     } finally {
       submitLockRef.current = false
       setBusy(false)
@@ -157,18 +169,26 @@ function ClassificationDialogInner({
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>
-              {isEdit ? `Edit ${entityLabel}` : `New ${entityLabel}`}
+              {isEdit
+                ? isCategory
+                  ? messages.classifications.editCategoryTitle
+                  : messages.classifications.editTagTitle
+                : isCategory
+                  ? messages.classifications.newCategoryTitle
+                  : messages.classifications.newTagTitle}
             </DialogTitle>
             <DialogDescription>
               {isCategory
-                ? 'Categories group related work streams cleanly.'
-                : 'Tags label cross-cutting topics; multiple tags can belong to one task.'}
+                ? messages.classifications.categoryDescription
+                : messages.classifications.tagDescription}
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSave} className="grid gap-3">
             <div className="grid gap-1.5">
-              <Label htmlFor="classification-name-input">Name</Label>
+              <Label htmlFor="classification-name-input">
+                {messages.classifications.nameLabel}
+              </Label>
               <Input
                 ref={inputRef}
                 id="classification-name-input"
@@ -177,23 +197,30 @@ function ClassificationDialogInner({
                   setName(event.target.value)
                   if (error) setError(null)
                 }}
-                placeholder={isCategory ? 'e.g. Platform Ops' : 'e.g. blocker'}
+                placeholder={
+                  isCategory
+                    ? messages.classifications.categoryPlaceholder
+                    : messages.classifications.tagPlaceholder
+                }
                 disabled={busy}
                 aria-invalid={error !== null}
               />
             </div>
 
             <div className="grid gap-1.5">
-              <span className="text-ui font-medium">Color</span>
+              <span className="text-ui font-medium">
+                {messages.classifications.colorLabel}
+              </span>
               <div className="flex flex-wrap gap-2">
                 {CLASSIFICATION_COLORS.map((candidate) => {
                   const meta = getClassificationMeta(candidate)
+                  const colorLabel = messages.colors[candidate]
                   const selected = color === candidate
                   return (
                     <button
                       key={candidate}
                       type="button"
-                      aria-label={meta.label}
+                      aria-label={colorLabel}
                       aria-pressed={selected}
                       onClick={() => setColor(candidate)}
                       className={cn(
@@ -207,7 +234,7 @@ function ClassificationDialogInner({
                         aria-hidden="true"
                         className={cn('size-2.5 rounded-full', meta.dotClass)}
                       />
-                      <span>{meta.label}</span>
+                      <span>{colorLabel}</span>
                     </button>
                   )
                 })}
@@ -231,7 +258,7 @@ function ClassificationDialogInner({
                   disabled={busy}
                 >
                   <Trash2 className="size-3.5" />
-                  Delete
+                  {messages.common.delete}
                 </Button>
               ) : (
                 <span />
@@ -244,14 +271,16 @@ function ClassificationDialogInner({
                   onClick={onClose}
                   disabled={busy}
                 >
-                  Cancel
+                  {messages.common.cancel}
                 </Button>
                 <Button type="submit" disabled={busy}>
                   {busy
-                    ? 'Saving...'
+                    ? messages.common.saving
                     : isEdit
-                      ? 'Save'
-                      : `Create ${entityLabel}`}
+                      ? messages.common.save
+                      : isCategory
+                        ? messages.classifications.createCategory
+                        : messages.classifications.createTag}
                 </Button>
               </div>
             </DialogFooter>
@@ -267,11 +296,21 @@ function ClassificationDialogInner({
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Delete {entityLabel}?</DialogTitle>
+            <DialogTitle>
+              {isCategory
+                ? messages.classifications.deleteCategoryTitle
+                : messages.classifications.deleteTagTitle}
+            </DialogTitle>
             <DialogDescription>
               {isCategory
-                ? `Deleting "${currentItem?.name ?? ''}" removes this category label only. All ${affectedCount} linked task${affectedCount === 1 ? '' : 's'} and their WorkLogs remain intact.`
-                : `Deleting "${currentItem?.name ?? ''}" detaches this tag from ${affectedCount} task${affectedCount === 1 ? '' : 's'}. Tasks and WorkLogs are not deleted.`}
+                ? messages.classifications.deleteCategoryDescription(
+                    currentItem?.name ?? '',
+                    affectedCount,
+                  )
+                : messages.classifications.deleteTagDescription(
+                    currentItem?.name ?? '',
+                    affectedCount,
+                  )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -281,7 +320,7 @@ function ClassificationDialogInner({
               onClick={() => setConfirmDeleteOpen(false)}
               disabled={busy}
             >
-              Cancel
+              {messages.common.cancel}
             </Button>
             <Button
               type="button"
@@ -289,7 +328,11 @@ function ClassificationDialogInner({
               onClick={() => void handleDelete()}
               disabled={busy}
             >
-              {busy ? 'Deleting...' : `Delete ${entityLabel}`}
+              {busy
+                ? messages.common.deleting
+                : isCategory
+                  ? messages.classifications.deleteCategoryConfirm
+                  : messages.classifications.deleteTagConfirm}
             </Button>
           </DialogFooter>
         </DialogContent>

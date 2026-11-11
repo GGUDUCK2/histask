@@ -5,6 +5,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react'
 import { Send } from 'lucide-react'
+import { useI18n } from '@/app/language-context'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -13,6 +14,7 @@ import { ValidationError } from '@/services/validation'
 import { isReactImeComposing } from '@/utils/keyboard'
 
 export function WorkLogComposer({ cardId }: { cardId: string }) {
+  const { messages } = useI18n()
   const { services } = useWorkspace()
   const [content, setContent] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -24,7 +26,7 @@ export function WorkLogComposer({ cardId }: { cardId: string }) {
   async function submitLog() {
     if (submitLockRef.current) return
     if (!content.trim()) {
-      setError('Write a progress note before saving.')
+      setError(messages.workLog.emptyNoteError)
       textareaRef.current?.focus()
       return
     }
@@ -39,7 +41,7 @@ export function WorkLogComposer({ cardId }: { cardId: string }) {
       if (caughtError instanceof ValidationError) {
         setError(caughtError.message)
       } else {
-        setError('Could not save WorkLog locally. Your note was preserved.')
+        setError(messages.workLog.createFallbackError)
       }
     } finally {
       submitLockRef.current = false
@@ -64,9 +66,11 @@ export function WorkLogComposer({ cardId }: { cardId: string }) {
   return (
     <form onSubmit={handleFormSubmit} className="grid gap-2">
       <div className="flex items-center justify-between gap-2">
-        <Label htmlFor={`worklog-composer-${cardId}`}>Add WorkLog</Label>
+        <Label htmlFor={`worklog-composer-${cardId}`}>
+          {messages.workLog.addLabel}
+        </Label>
         <span className="text-metadata text-muted-foreground">
-          Enter for newline · Ctrl/Cmd+Enter to save
+          {messages.workLog.composerHint}
         </span>
       </div>
       <Textarea
@@ -82,7 +86,7 @@ export function WorkLogComposer({ cardId }: { cardId: string }) {
         }}
         onKeyDown={handleKeyDown}
         rows={3}
-        placeholder="Record what moved forward, blockers, or next concrete step..."
+        placeholder={messages.workLog.composerPlaceholder}
         disabled={submitting}
         aria-invalid={error !== null}
         aria-describedby={error ? `worklog-composer-error-${cardId}` : undefined}
@@ -99,7 +103,7 @@ export function WorkLogComposer({ cardId }: { cardId: string }) {
       <div className="flex justify-end">
         <Button type="submit" size="sm" disabled={submitting}>
           <Send className="size-3.5" />
-          {submitting ? 'Saving...' : 'Save WorkLog'}
+          {submitting ? messages.common.saving : messages.workLog.saveButton}
         </Button>
       </div>
     </form>

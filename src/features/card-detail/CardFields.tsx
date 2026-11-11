@@ -6,6 +6,7 @@ import {
   type FormEvent,
 } from 'react'
 import { Check, Plus, Save, X } from 'lucide-react'
+import { useI18n } from '@/app/language-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,9 +23,7 @@ import type { BoardCardProjection } from '@/services/board-query'
 import { ValidationError } from '@/services/validation'
 import {
   CARD_STATUSES,
-  CARD_STATUS_LABELS,
   PRIORITIES,
-  PRIORITY_LABELS,
   type CardStatus,
   type Priority,
 } from '@/types/domain'
@@ -64,6 +63,7 @@ function sameTagSelection(left: readonly string[], right: readonly string[]) {
 }
 
 export function CardFields({ projection }: { projection: BoardCardProjection }) {
+  const { intlLocale, messages } = useI18n()
   const { services, snapshot, openClassificationDialog } = useWorkspace()
   const { card, tags } = projection
   const [draft, setDraft] = useState<DraftFields>(() => toDraft(projection))
@@ -122,7 +122,7 @@ export function CardFields({ projection }: { projection: BoardCardProjection }) 
     event.preventDefault()
     if (saveLockRef.current) return
     if (!draft.title.trim()) {
-      setError('Task title is required.')
+      setError(messages.board.taskTitleRequired)
       return
     }
 
@@ -145,7 +145,7 @@ export function CardFields({ projection }: { projection: BoardCardProjection }) 
       if (caughtError instanceof ValidationError) {
         setError(caughtError.message)
       } else {
-        setError('Could not save task changes locally. Your edits were kept.')
+        setError(messages.cardDetail.saveErrorFallback)
       }
     } finally {
       saveLockRef.current = false
@@ -169,7 +169,9 @@ export function CardFields({ projection }: { projection: BoardCardProjection }) 
   return (
     <form onSubmit={handleSave} className="grid gap-3">
       <div className="grid gap-1.5">
-        <Label htmlFor={`card-title-${card.id}`}>Title</Label>
+        <Label htmlFor={`card-title-${card.id}`}>
+          {messages.cardDetail.titleField}
+        </Label>
         <Input
           id={`card-title-${card.id}`}
           value={draft.title}
@@ -186,7 +188,9 @@ export function CardFields({ projection }: { projection: BoardCardProjection }) 
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="grid gap-1.5">
-          <Label htmlFor={`card-status-${card.id}`}>Status</Label>
+          <Label htmlFor={`card-status-${card.id}`}>
+            {messages.cardDetail.statusField}
+          </Label>
           <Select
             value={draft.status}
             onValueChange={(value) => {
@@ -201,7 +205,7 @@ export function CardFields({ projection }: { projection: BoardCardProjection }) 
             <SelectContent>
               {CARD_STATUSES.map((status) => (
                 <SelectItem key={status} value={status}>
-                  {CARD_STATUS_LABELS[status]}
+                  {messages.statuses[status]}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -209,7 +213,9 @@ export function CardFields({ projection }: { projection: BoardCardProjection }) 
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor={`card-priority-${card.id}`}>Priority</Label>
+          <Label htmlFor={`card-priority-${card.id}`}>
+            {messages.cardDetail.priorityField}
+          </Label>
           <Select
             value={draft.priority}
             onValueChange={(value) => {
@@ -224,7 +230,7 @@ export function CardFields({ projection }: { projection: BoardCardProjection }) 
             <SelectContent>
               {PRIORITIES.map((priority) => (
                 <SelectItem key={priority} value={priority}>
-                  {PRIORITY_LABELS[priority]}
+                  {messages.priorities[priority]}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -235,7 +241,9 @@ export function CardFields({ projection }: { projection: BoardCardProjection }) 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="grid gap-1.5">
           <div className="flex items-center justify-between gap-2">
-            <Label htmlFor={`card-category-${card.id}`}>Category</Label>
+            <Label htmlFor={`card-category-${card.id}`}>
+              {messages.cardDetail.categoryField}
+            </Label>
             <button
               type="button"
               onClick={(event) =>
@@ -247,7 +255,7 @@ export function CardFields({ projection }: { projection: BoardCardProjection }) 
               className="inline-flex items-center gap-0.5 rounded-control px-1 text-metadata text-muted-foreground hover:bg-surface-hover hover:text-foreground"
             >
               <Plus className="size-3" />
-              New
+              {messages.common.newLabel}
             </button>
           </div>
           <Select
@@ -265,7 +273,9 @@ export function CardFields({ projection }: { projection: BoardCardProjection }) 
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={NO_CATEGORY}>No category</SelectItem>
+              <SelectItem value={NO_CATEGORY}>
+                {messages.cardDetail.noCategory}
+              </SelectItem>
               {snapshot.categories.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   {category.name}
@@ -277,7 +287,9 @@ export function CardFields({ projection }: { projection: BoardCardProjection }) 
 
         <div className="grid gap-1.5">
           <div className="flex items-center justify-between gap-2">
-            <Label htmlFor={`card-due-${card.id}`}>Due date</Label>
+            <Label htmlFor={`card-due-${card.id}`}>
+              {messages.cardDetail.dueDateField}
+            </Label>
             {draft.dueDate && (
               <button
                 type="button"
@@ -288,7 +300,7 @@ export function CardFields({ projection }: { projection: BoardCardProjection }) 
                 className="inline-flex items-center gap-0.5 rounded-control px-1 text-metadata text-muted-foreground hover:bg-surface-hover hover:text-foreground"
               >
                 <X className="size-3" />
-                Clear
+                {messages.common.clear}
               </button>
             )}
           </div>
@@ -307,7 +319,9 @@ export function CardFields({ projection }: { projection: BoardCardProjection }) 
 
       <div className="grid gap-1.5">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-ui font-medium">Tags</span>
+          <span className="text-ui font-medium">
+            {messages.cardDetail.tagsField}
+          </span>
           <button
             type="button"
             onClick={(event) =>
@@ -319,12 +333,12 @@ export function CardFields({ projection }: { projection: BoardCardProjection }) 
             className="inline-flex items-center gap-0.5 rounded-control px-1 text-metadata text-muted-foreground hover:bg-surface-hover hover:text-foreground"
           >
             <Plus className="size-3" />
-            New tag
+            {messages.sidebar.newTag}
           </button>
         </div>
         {snapshot.tags.length === 0 ? (
           <p className="text-metadata text-muted-foreground">
-            No tags created yet.
+            {messages.cardDetail.noTagsCreated}
           </p>
         ) : (
           <div className="flex flex-wrap gap-1.5">
@@ -355,7 +369,9 @@ export function CardFields({ projection }: { projection: BoardCardProjection }) 
       </div>
 
       <div className="grid gap-1.5">
-        <Label htmlFor={`card-description-${card.id}`}>Description</Label>
+        <Label htmlFor={`card-description-${card.id}`}>
+          {messages.cardDetail.descriptionField}
+        </Label>
         <Textarea
           id={`card-description-${card.id}`}
           value={draft.description}
@@ -364,24 +380,30 @@ export function CardFields({ projection }: { projection: BoardCardProjection }) 
             setDraft((prev) => ({ ...prev, description: event.target.value }))
           }}
           rows={3}
-          placeholder="Context, links, acceptance criteria, or key notes..."
+          placeholder={messages.cardDetail.descriptionPlaceholder}
           disabled={saving}
         />
       </div>
 
       <dl className="grid grid-cols-1 gap-1 rounded-card border bg-surface-subtle/60 px-3 py-2 text-metadata text-muted-foreground sm:grid-cols-2">
         <div className="flex items-center justify-between gap-2 sm:block">
-          <dt className="font-medium text-secondary-foreground">Created</dt>
-          <dd>{formatExactTime(card.createdAt)}</dd>
+          <dt className="font-medium text-secondary-foreground">
+            {messages.cardDetail.createdField}
+          </dt>
+          <dd>{formatExactTime(card.createdAt, intlLocale)}</dd>
         </div>
         <div className="flex items-center justify-between gap-2 sm:block">
-          <dt className="font-medium text-secondary-foreground">Updated</dt>
-          <dd>{formatExactTime(card.updatedAt)}</dd>
+          <dt className="font-medium text-secondary-foreground">
+            {messages.cardDetail.updatedField}
+          </dt>
+          <dd>{formatExactTime(card.updatedAt, intlLocale)}</dd>
         </div>
         {card.completedAt && (
           <div className="flex items-center justify-between gap-2 sm:col-span-2 sm:block">
-            <dt className="font-medium text-secondary-foreground">Completed</dt>
-            <dd>{formatExactTime(card.completedAt)}</dd>
+            <dt className="font-medium text-secondary-foreground">
+              {messages.cardDetail.completedField}
+            </dt>
+            <dd>{formatExactTime(card.completedAt, intlLocale)}</dd>
           </div>
         )}
       </dl>
@@ -402,11 +424,11 @@ export function CardFields({ projection }: { projection: BoardCardProjection }) 
           aria-live="polite"
           className="text-metadata text-muted-foreground"
         >
-          {savedNotice && !dirty ? 'Saved changes.' : ''}
+          {savedNotice && !dirty ? messages.cardDetail.savedChanges : ''}
         </span>
         <Button type="submit" size="sm" disabled={saving || !dirty}>
           <Save className="size-3.5" />
-          {saving ? 'Saving...' : 'Save changes'}
+          {saving ? messages.common.saving : messages.cardDetail.saveChanges}
         </Button>
       </div>
     </form>

@@ -18,10 +18,11 @@ import {
 import { WorkLogComposer } from '@/features/worklogs/WorkLogComposer'
 import { WorkLogTimeline } from '@/features/worklogs/WorkLogTimeline'
 import { useWorkspace } from '@/features/workspace/workspace-context'
-import { CARD_STATUS_LABELS } from '@/types/domain'
+import { useI18n } from '@/app/language-context'
 import { CardFields } from './CardFields'
 
 export function CardDetailDrawer() {
+  const { messages } = useI18n()
   const { snapshot, selectedCardProjection, closeCard, services } =
     useWorkspace()
 
@@ -44,7 +45,7 @@ export function CardDetailDrawer() {
       setArchiveConfirmOpen(false)
       closeCard()
     } catch {
-      setActionError('Could not archive this task locally.')
+      setActionError(messages.cardDetail.archiveError)
     } finally {
       actionLockRef.current = false
       setActionBusy(false)
@@ -61,7 +62,7 @@ export function CardDetailDrawer() {
       setDeleteConfirmOpen(false)
       closeCard()
     } catch {
-      setActionError('Could not delete this task locally.')
+      setActionError(messages.cardDetail.deleteError)
     } finally {
       actionLockRef.current = false
       setActionBusy(false)
@@ -92,7 +93,7 @@ export function CardDetailDrawer() {
               <div className="grid gap-2 border-b pb-3 pr-8">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="rounded-tag border bg-surface-subtle px-2 py-0.5 text-tag font-medium text-secondary-foreground">
-                    {CARD_STATUS_LABELS[card.status]}
+                    {messages.statuses[card.status]}
                   </span>
                   <div className="flex items-center gap-1.5">
                     <Button
@@ -105,7 +106,7 @@ export function CardDetailDrawer() {
                       }}
                     >
                       <Archive className="size-3.5" />
-                      Archive
+                      {messages.cardDetail.archive}
                     </Button>
                     <Button
                       type="button"
@@ -118,7 +119,7 @@ export function CardDetailDrawer() {
                       }}
                     >
                       <Trash2 className="size-3.5" />
-                      Delete
+                      {messages.cardDetail.delete}
                     </Button>
                   </div>
                 </div>
@@ -126,7 +127,7 @@ export function CardDetailDrawer() {
                   {card.title}
                 </SheetTitle>
                 <SheetDescription className="sr-only">
-                  Edit task details and record progress WorkLogs for {card.title}.
+                  {messages.cardDetail.descriptionSrOnly(card.title)}
                 </SheetDescription>
               </div>
 
@@ -139,7 +140,7 @@ export function CardDetailDrawer() {
                       id="card-history-heading"
                       className="text-ui font-semibold uppercase tracking-wide text-secondary-foreground"
                     >
-                      History ({workLogs.length})
+                      {messages.cardDetail.historyHeading(workLogs.length)}
                     </h3>
                   </div>
 
@@ -160,11 +161,9 @@ export function CardDetailDrawer() {
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Archive task?</DialogTitle>
+            <DialogTitle>{messages.cardDetail.archiveDialogTitle}</DialogTitle>
             <DialogDescription>
-              Archiving removes <strong>{card?.title}</strong> from active boards
-              and metrics while keeping the task and all its WorkLogs preserved
-              inside JSON backups.
+              {messages.cardDetail.archiveDialogDescription(card?.title ?? '')}
             </DialogDescription>
           </DialogHeader>
           {actionError && (
@@ -179,14 +178,16 @@ export function CardDetailDrawer() {
               onClick={() => setArchiveConfirmOpen(false)}
               disabled={actionBusy}
             >
-              Cancel
+              {messages.common.cancel}
             </Button>
             <Button
               type="button"
               onClick={() => void handleArchive()}
               disabled={actionBusy}
             >
-              {actionBusy ? 'Archiving...' : 'Archive task'}
+              {actionBusy
+                ? messages.cardDetail.archiving
+                : messages.cardDetail.archiveConfirm}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -200,11 +201,12 @@ export function CardDetailDrawer() {
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Delete task permanently?</DialogTitle>
+            <DialogTitle>{messages.cardDetail.deleteDialogTitle}</DialogTitle>
             <DialogDescription>
-              This permanently removes <strong>{card?.title}</strong> along with
-              all {workLogs.length} WorkLog{workLogs.length === 1 ? '' : 's'}{' '}
-              and tag links from local storage. This cannot be undone.
+              {messages.cardDetail.deleteDialogDescription(
+                card?.title ?? '',
+                workLogs.length,
+              )}
             </DialogDescription>
           </DialogHeader>
           {actionError && (
@@ -219,7 +221,7 @@ export function CardDetailDrawer() {
               onClick={() => setDeleteConfirmOpen(false)}
               disabled={actionBusy}
             >
-              Cancel
+              {messages.common.cancel}
             </Button>
             <Button
               type="button"
@@ -227,7 +229,9 @@ export function CardDetailDrawer() {
               onClick={() => void handlePermanentDelete()}
               disabled={actionBusy}
             >
-              {actionBusy ? 'Deleting...' : 'Delete permanently'}
+              {actionBusy
+                ? messages.common.deleting
+                : messages.cardDetail.deleteConfirm}
             </Button>
           </DialogFooter>
         </DialogContent>

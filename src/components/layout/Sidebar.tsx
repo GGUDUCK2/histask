@@ -10,21 +10,22 @@ import {
   Tags,
 } from 'lucide-react'
 import { NavLink, useLocation, useNavigate } from 'react-router'
+import { useI18n } from '@/app/language-context'
 import { MiniCalendar } from '@/features/calendar/MiniCalendar'
 import { useWorkspace } from '@/features/workspace/workspace-context'
 import { getClassificationMeta } from '@/utils/classification-styles'
 import { cn } from '@/utils/cn'
 
-const navigation: Array<{
-  label: string
+const NAVIGATION_ITEMS: Array<{
+  labelKey: 'today' | 'allTasks' | 'inProgress' | 'waiting' | 'completed'
   path: string
   icon: ComponentType<{ className?: string }>
 }> = [
-  { label: 'Today', path: '/today', icon: CalendarDays },
-  { label: 'All Tasks', path: '/all', icon: ListTodo },
-  { label: 'In Progress', path: '/in-progress', icon: CircleDot },
-  { label: 'Waiting', path: '/waiting', icon: Clock3 },
-  { label: 'Completed', path: '/completed', icon: CheckCircle2 },
+  { labelKey: 'today', path: '/today', icon: CalendarDays },
+  { labelKey: 'allTasks', path: '/all', icon: ListTodo },
+  { labelKey: 'inProgress', path: '/in-progress', icon: CircleDot },
+  { labelKey: 'waiting', path: '/waiting', icon: Clock3 },
+  { labelKey: 'completed', path: '/completed', icon: CheckCircle2 },
 ]
 
 const TASK_FILTER_ROUTES = new Set([
@@ -35,6 +36,7 @@ const TASK_FILTER_ROUTES = new Set([
 ])
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+  const { messages } = useI18n()
   const {
     snapshot,
     filters,
@@ -53,8 +55,8 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex h-full flex-col bg-surface-subtle">
-      <nav aria-label="Primary" className="grid gap-1 p-3">
-        {navigation.map(({ icon: Icon, label, path }) => (
+      <nav aria-label={messages.sidebar.primaryNavLabel} className="grid gap-1 p-3">
+        {NAVIGATION_ITEMS.map(({ icon: Icon, labelKey, path }) => (
           <NavLink
             key={path}
             to={path}
@@ -67,7 +69,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             }
           >
             <Icon className="size-4" />
-            {label}
+            {messages.sidebar[labelKey]}
           </NavLink>
         ))}
       </nav>
@@ -83,11 +85,11 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               id="categories-slot-title"
               className="text-metadata font-semibold uppercase tracking-wide text-muted-foreground"
             >
-              Categories
+              {messages.sidebar.categories}
             </h2>
             <button
               type="button"
-              aria-label="New category"
+              aria-label={messages.sidebar.newCategory}
               onClick={(event) =>
                 openClassificationDialog(
                   { kind: 'category', mode: 'create' },
@@ -102,7 +104,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
           {snapshot.categories.length === 0 ? (
             <p className="px-1 text-metadata text-muted-foreground">
-              No categories yet
+              {messages.sidebar.noCategories}
             </p>
           ) : (
             <div className="grid gap-0.5">
@@ -118,7 +120,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                     <button
                       type="button"
                       aria-pressed={selected}
-                      aria-label={`${category.name} (${count} ${count === 1 ? 'task' : 'tasks'})`}
+                      aria-label={`${category.name} (${messages.common.taskCountLabel(count)})`}
                       onClick={() => {
                         setFilters((previous) => ({
                           ...previous,
@@ -152,7 +154,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                     </button>
                     <button
                       type="button"
-                      aria-label={`Edit category ${category.name}`}
+                      aria-label={messages.sidebar.editCategory(category.name)}
                       onClick={(event) =>
                         openClassificationDialog(
                           {
@@ -182,12 +184,12 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                 id="tags-slot-title"
                 className="text-metadata font-semibold uppercase tracking-wide text-muted-foreground"
               >
-                Tags
+                {messages.sidebar.tags}
               </h2>
             </div>
             <button
               type="button"
-              aria-label="New tag"
+              aria-label={messages.sidebar.newTag}
               onClick={(event) =>
                 openClassificationDialog(
                   { kind: 'tag', mode: 'create' },
@@ -202,7 +204,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
           {snapshot.tags.length === 0 ? (
             <p className="px-1 text-metadata text-muted-foreground">
-              No tags yet
+              {messages.sidebar.noTags}
             </p>
           ) : (
             <div className="grid gap-0.5">
@@ -215,7 +217,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                     <button
                       type="button"
                       aria-pressed={selected}
-                      aria-label={`${tag.name} (${count} ${count === 1 ? 'task' : 'tasks'})`}
+                      aria-label={`${tag.name} (${messages.common.taskCountLabel(count)})`}
                       onClick={() => {
                         setFilters((previous) => ({
                           ...previous,
@@ -246,7 +248,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                     </button>
                     <button
                       type="button"
-                      aria-label={`Edit tag ${tag.name}`}
+                      aria-label={messages.sidebar.editTag(tag.name)}
                       onClick={(event) =>
                         openClassificationDialog(
                           { kind: 'tag', mode: 'edit', itemId: tag.id },

@@ -9,13 +9,11 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { useI18n } from '@/app/language-context'
 import type { HistaskDomainServices } from '@/services'
 import type { BoardCardProjection } from '@/services/board-query'
 import type { MoveCardInput } from '@/services/card-order'
-import {
-  CARD_SORT_LABELS,
-  type CardSortMode,
-} from '@/types/card-query'
+import type { CardSortMode } from '@/types/card-query'
 import { CARD_STATUSES, type CardStatus } from '@/types/domain'
 
 const COLUMN_PREFIX = 'column:'
@@ -66,6 +64,7 @@ export function useBoardDnd({
   services: HistaskDomainServices
   onError: (message: string | null) => void
 }) {
+  const { messages } = useI18n()
   const [optimisticColumns, setOptimisticColumns] = useState<ColumnMap | null>(
     null,
   )
@@ -115,12 +114,10 @@ export function useBoardDnd({
       } catch {
         setOptimistic(null)
         setFailedMoveInput(input)
-        onError(
-          'Could not save the new task order or status locally. Your previous board order was restored.',
-        )
+        onError(messages.board.dndPersistFailed)
       }
     },
-    [onError, services.cardOrder, setOptimistic],
+    [messages, onError, services.cardOrder, setOptimistic],
   )
 
   const retryFailedMove = useCallback(() => {
@@ -159,7 +156,7 @@ export function useBoardDnd({
       if (activeStatus === overStatus) {
         if (sortMode !== 'manual' && activeId !== overId) {
           setDndNotice(
-            `Manual within-column reordering is disabled while sorted by ${CARD_SORT_LABELS[sortMode]}. Drag to another column to change status, or switch sort to Manual.`,
+            messages.board.dndDisabledOver(messages.sortModes[sortMode]),
           )
         }
         return
@@ -189,7 +186,7 @@ export function useBoardDnd({
 
       setOptimistic(next)
     },
-    [cardsByStatus, setOptimistic, sortMode],
+    [cardsByStatus, messages, setOptimistic, sortMode],
   )
 
   const handleDragEnd = useCallback(
@@ -237,7 +234,7 @@ export function useBoardDnd({
         if (sortMode !== 'manual') {
           setOptimistic(null)
           setDndNotice(
-            `Manual within-column reordering is disabled while sorted by ${CARD_SORT_LABELS[sortMode]}. Switch sort to Manual to drag cards inside a column.`,
+            messages.board.dndDisabledDrop(messages.sortModes[sortMode]),
           )
           return
         }
@@ -275,7 +272,7 @@ export function useBoardDnd({
         visibleCardIds: targetBaseList.map(({ card }) => card.id),
       })
     },
-    [cardsByStatus, persistMove, setOptimistic, sortMode],
+    [cardsByStatus, messages, persistMove, setOptimistic, sortMode],
   )
 
   const handleDragCancel = useCallback(() => {
@@ -294,10 +291,10 @@ export function useBoardDnd({
       try {
         await services.cardOrder.moveCardStep(cardId, direction, visibleIds)
       } catch {
-        onError('Could not save the new task order locally.')
+        onError(messages.board.reorderPersistFailed)
       }
     },
-    [cardsByStatus, onError, services.cardOrder],
+    [cardsByStatus, messages, onError, services.cardOrder],
   )
 
   const handleMoveStatus = useCallback(

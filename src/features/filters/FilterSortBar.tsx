@@ -1,4 +1,5 @@
 import { ArrowUpDown, RotateCcw, X } from 'lucide-react'
+import { useI18n } from '@/app/language-context'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -9,17 +10,13 @@ import {
 } from '@/components/ui/select'
 import { useWorkspace } from '@/features/workspace/workspace-context'
 import {
-  CARD_SORT_LABELS,
   CARD_SORT_MODES,
-  DUE_DATE_FILTER_LABELS,
   type CardSortMode,
   type DueDateFilter,
 } from '@/types/card-query'
 import {
   CARD_STATUSES,
-  CARD_STATUS_LABELS,
   PRIORITIES,
-  PRIORITY_LABELS,
   type CardStatus,
   type Priority,
 } from '@/types/domain'
@@ -38,6 +35,7 @@ export function FilterSortBar({
 }: {
   hideStatusFilter?: boolean
 }) {
+  const { messages } = useI18n()
   const {
     snapshot,
     searchQuery,
@@ -57,7 +55,7 @@ export function FilterSortBar({
 
   return (
     <section
-      aria-label="Filter and sort tasks"
+      aria-label={messages.filters.regionAria}
       className="grid gap-2 rounded-card border bg-surface px-3 py-2"
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -71,11 +69,16 @@ export function FilterSortBar({
               }))
             }
           >
-            <SelectTrigger aria-label="Filter by category" className="h-control-sm text-ui">
-              <SelectValue placeholder="All categories" />
+            <SelectTrigger
+              aria-label={messages.filters.byCategoryAria}
+              className="h-control-sm text-ui"
+            >
+              <SelectValue placeholder={messages.filters.allCategories} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_VALUE}>All categories</SelectItem>
+              <SelectItem value={ALL_VALUE}>
+                {messages.filters.allCategories}
+              </SelectItem>
               {snapshot.categories.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   {category.name}
@@ -95,11 +98,16 @@ export function FilterSortBar({
               }))
             }
           >
-            <SelectTrigger aria-label="Filter by tag" className="h-control-sm text-ui">
-              <SelectValue placeholder="All tags" />
+            <SelectTrigger
+              aria-label={messages.filters.byTagAria}
+              className="h-control-sm text-ui"
+            >
+              <SelectValue placeholder={messages.filters.allTags} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_VALUE}>All tags</SelectItem>
+              <SelectItem value={ALL_VALUE}>
+                {messages.filters.allTags}
+              </SelectItem>
               {snapshot.tags.map((tag) => (
                 <SelectItem key={tag.id} value={tag.id}>
                   {tag.name}
@@ -120,14 +128,19 @@ export function FilterSortBar({
                 }))
               }
             >
-              <SelectTrigger aria-label="Filter by status" className="h-control-sm text-ui">
-                <SelectValue placeholder="All statuses" />
+              <SelectTrigger
+                aria-label={messages.filters.byStatusAria}
+                className="h-control-sm text-ui"
+              >
+                <SelectValue placeholder={messages.filters.allStatuses} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL_VALUE}>All statuses</SelectItem>
+                <SelectItem value={ALL_VALUE}>
+                  {messages.filters.allStatuses}
+                </SelectItem>
                 {CARD_STATUSES.map((status) => (
                   <SelectItem key={status} value={status}>
-                    {CARD_STATUS_LABELS[status]}
+                    {messages.statuses[status]}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -145,14 +158,19 @@ export function FilterSortBar({
               }))
             }
           >
-            <SelectTrigger aria-label="Filter by priority" className="h-control-sm text-ui">
-              <SelectValue placeholder="All priorities" />
+            <SelectTrigger
+              aria-label={messages.filters.byPriorityAria}
+              className="h-control-sm text-ui"
+            >
+              <SelectValue placeholder={messages.filters.allPriorities} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_VALUE}>All priorities</SelectItem>
+              <SelectItem value={ALL_VALUE}>
+                {messages.filters.allPriorities}
+              </SelectItem>
               {PRIORITIES.map((priority) => (
                 <SelectItem key={priority} value={priority}>
-                  {PRIORITY_LABELS[priority]}
+                  {messages.priorities[priority]}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -169,13 +187,16 @@ export function FilterSortBar({
               }))
             }
           >
-            <SelectTrigger aria-label="Filter by due date" className="h-control-sm text-ui">
+            <SelectTrigger
+              aria-label={messages.filters.byDueAria}
+              className="h-control-sm text-ui"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {DUE_FILTERS.map((due) => (
                 <SelectItem key={due} value={due}>
-                  {DUE_DATE_FILTER_LABELS[due]}
+                  {messages.dueFilters[due]}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -192,7 +213,7 @@ export function FilterSortBar({
             onValueChange={(value) => setSortMode(value as CardSortMode)}
           >
             <SelectTrigger
-              aria-label="Sort tasks"
+              aria-label={messages.filters.sortAria}
               className="h-control-sm w-[155px] text-ui"
             >
               <SelectValue />
@@ -200,7 +221,7 @@ export function FilterSortBar({
             <SelectContent>
               {CARD_SORT_MODES.map((mode) => (
                 <SelectItem key={mode} value={mode}>
-                  {CARD_SORT_LABELS[mode]}
+                  {messages.sortModes[mode]}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -210,7 +231,9 @@ export function FilterSortBar({
 
       {hasAnyFilterOrSearch && (
         <div className="flex flex-wrap items-center gap-1.5 border-t pt-2 text-metadata">
-          <span className="text-muted-foreground">Active:</span>
+          <span className="text-muted-foreground">
+            {messages.filters.activeLabel}
+          </span>
 
           {searchQuery.trim() && (
             <button
@@ -218,7 +241,9 @@ export function FilterSortBar({
               onClick={() => setSearchQuery('')}
               className="inline-flex items-center gap-1 rounded-tag border bg-surface-subtle px-2 py-0.5 text-foreground hover:bg-surface-hover"
             >
-              <span>Search: {searchQuery.trim()}</span>
+              <span>
+                {messages.filters.chipSearch}: {searchQuery.trim()}
+              </span>
               <X className="size-3 text-muted-foreground" />
             </button>
           )}
@@ -231,7 +256,9 @@ export function FilterSortBar({
               }
               className="inline-flex items-center gap-1 rounded-tag border bg-surface-subtle px-2 py-0.5 text-foreground hover:bg-surface-hover"
             >
-              <span>Category: {activeCategory.name}</span>
+              <span>
+                {messages.filters.chipCategory}: {activeCategory.name}
+              </span>
               <X className="size-3 text-muted-foreground" />
             </button>
           )}
@@ -244,7 +271,9 @@ export function FilterSortBar({
               }
               className="inline-flex items-center gap-1 rounded-tag border bg-surface-subtle px-2 py-0.5 text-foreground hover:bg-surface-hover"
             >
-              <span>Tag: {activeTag.name}</span>
+              <span>
+                {messages.filters.chipTag}: {activeTag.name}
+              </span>
               <X className="size-3 text-muted-foreground" />
             </button>
           )}
@@ -257,7 +286,9 @@ export function FilterSortBar({
               }
               className="inline-flex items-center gap-1 rounded-tag border bg-surface-subtle px-2 py-0.5 text-foreground hover:bg-surface-hover"
             >
-              <span>Status: {CARD_STATUS_LABELS[filters.status]}</span>
+              <span>
+                {messages.filters.chipStatus}: {messages.statuses[filters.status]}
+              </span>
               <X className="size-3 text-muted-foreground" />
             </button>
           )}
@@ -270,7 +301,10 @@ export function FilterSortBar({
               }
               className="inline-flex items-center gap-1 rounded-tag border bg-surface-subtle px-2 py-0.5 text-foreground hover:bg-surface-hover"
             >
-              <span>Priority: {PRIORITY_LABELS[filters.priority]}</span>
+              <span>
+                {messages.filters.chipPriority}:{' '}
+                {messages.priorities[filters.priority]}
+              </span>
               <X className="size-3 text-muted-foreground" />
             </button>
           )}
@@ -283,7 +317,9 @@ export function FilterSortBar({
               }
               className="inline-flex items-center gap-1 rounded-tag border bg-surface-subtle px-2 py-0.5 text-foreground hover:bg-surface-hover"
             >
-              <span>Due: {DUE_DATE_FILTER_LABELS[filters.due]}</span>
+              <span>
+                {messages.filters.chipDue}: {messages.dueFilters[filters.due]}
+              </span>
               <X className="size-3 text-muted-foreground" />
             </button>
           )}
@@ -296,7 +332,7 @@ export function FilterSortBar({
             className="ml-auto h-6 px-2 text-metadata"
           >
             <RotateCcw className="size-3" />
-            Clear all
+            {messages.filters.clearAll}
           </Button>
         </div>
       )}

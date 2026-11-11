@@ -1,39 +1,50 @@
 import { Monitor, Moon, Sun } from 'lucide-react'
+import { useI18n } from '@/app/language-context'
 import { useTheme } from '@/app/theme-context'
 import { Button } from '@/components/ui/button'
 import { THEMES, type Theme } from '@/types/settings'
 import { cn } from '@/utils/cn'
 
-const themeDetails = {
-  system: { label: 'System', icon: Monitor },
-  light: { label: 'Light', icon: Sun },
-  dark: { label: 'Dark', icon: Moon },
-} satisfies Record<Theme, { label: string; icon: typeof Monitor }>
+const themeIcons = {
+  system: Monitor,
+  light: Sun,
+  dark: Moon,
+} satisfies Record<Theme, typeof Monitor>
 
 export function ThemeSettings() {
   const { theme, preferenceError, preferenceLoading, setTheme } = useTheme()
+  const { messages } = useI18n()
+
+  const resolvedError =
+    preferenceError === null
+      ? null
+      : preferenceError.toLowerCase().includes('read')
+        ? messages.settings.themeReadError
+        : messages.settings.themeSaveError
 
   return (
     <div className="settings-row items-start">
       <div className="min-w-0 flex-1">
-        <div className="font-medium">Theme</div>
+        <div className="font-medium">{messages.settings.themeTitle}</div>
         <p className="mt-0.5 text-metadata text-muted-foreground">
-          System follows your operating system appearance.
+          {messages.settings.themeDescription}
         </p>
-        {preferenceError && (
+        {resolvedError && (
           <p className="mt-1 text-metadata text-destructive" role="alert">
-            {preferenceError}
+            {resolvedError}
           </p>
         )}
       </div>
       <div className="flex rounded-control border bg-surface p-0.5">
         {THEMES.map((value) => {
-          const { icon: Icon, label } = themeDetails[value]
+          const Icon = themeIcons[value]
+          const label = messages.settings.themeOptions[value]
           return (
             <Button
               key={value}
               variant="ghost"
               size="sm"
+              aria-label={label}
               aria-pressed={theme === value}
               disabled={preferenceLoading}
               className={cn(
