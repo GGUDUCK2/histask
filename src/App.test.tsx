@@ -46,10 +46,10 @@ describe('application entry and routing', () => {
     expect(await screen.findByRole('heading', { name: 'Waiting' })).toBeVisible()
   })
 
-  it('restores a hash route on a new application mount', async () => {
+  it('restores a hash route on a new application mount and redirects unknown nested routes', async () => {
     window.location.hash = '#/completed'
     const database = await createTestDatabase('app-refresh')
-    render(<App database={database} />)
+    const { unmount } = render(<App database={database} />)
 
     expect(await screen.findByRole('heading', { name: 'Completed' })).toBeVisible()
     expect(
@@ -57,6 +57,12 @@ describe('application entry and routing', () => {
         '[aria-current="page"]',
       ),
     ).toHaveTextContent('Completed')
+    unmount()
+
+    window.location.hash = '#/unknown/nested/route'
+    render(<App database={database} />)
+    expect(await screen.findByRole('heading', { name: 'All Tasks' })).toBeVisible()
+    expect(window.location.hash).toBe('#/all')
   })
 
   it('shows a recoverable database error and retries without deleting data', async () => {

@@ -97,6 +97,9 @@ describe('Settings', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'Export' }))
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /^Saved histask-backup-/,
+    )
     expect(createObjectURL).toHaveBeenCalledOnce()
     expect(createObjectURL.mock.calls[0]?.[0]).toMatchObject({
       type: 'application/json',
@@ -104,9 +107,6 @@ describe('Settings', () => {
     expect(downloadedFilename).toMatch(/^histask-backup-\d{4}-\d{2}-\d{2}\.json$/)
     expect(click).toHaveBeenCalledOnce()
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:histask-backup')
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      /^Saved histask-backup-/,
-    )
   })
 
   it('validates an import before confirmation and preserves settings on replace', async () => {
