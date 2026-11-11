@@ -1,4 +1,4 @@
-import { Monitor, Moon, Sun } from 'lucide-react'
+import { Monitor, Moon, Palette, Sun } from 'lucide-react'
 import { useI18n } from '@/app/language-context'
 import { useTheme } from '@/app/theme-context'
 import { Button } from '@/components/ui/button'
@@ -24,6 +24,10 @@ export function ThemeSettings() {
 
   return (
     <div className="settings-row items-start">
+      <Palette
+        className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+        aria-hidden="true"
+      />
       <div className="min-w-0 flex-1">
         <div className="font-medium">{messages.settings.themeTitle}</div>
         <p className="mt-0.5 text-metadata text-muted-foreground">
@@ -35,7 +39,7 @@ export function ThemeSettings() {
           </p>
         )}
       </div>
-      <div className="flex rounded-control border bg-surface p-0.5">
+      <div className="flex shrink-0 rounded-control border bg-surface p-0.5">
         {THEMES.map((value) => {
           const Icon = themeIcons[value]
           const label = messages.settings.themeOptions[value]
